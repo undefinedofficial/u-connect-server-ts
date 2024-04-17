@@ -1,6 +1,6 @@
 import { App, DISABLED, HttpRequest, HttpResponse, SHARED_COMPRESSOR } from "uWebSockets.js";
 import { Method, MethodType, ServerCallContextSource } from "./models";
-import { UserData } from "./interfaces";
+import { IWebSocket, UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
 import { ResponseError } from "./errors/ResponseError";
 
@@ -55,7 +55,7 @@ interface UConnectOptions {
   sendPingsAutomatically?: boolean;
 
   /**
-   *  What permessage-deflate compression to use. uWS.DISABLED, uWS.SHARED_COMPRESSOR or any of the uWS.DEDICATED_COMPRESSOR_xxxKB. Defaults to uWS.DISABLED.
+   *  What permessage-deflate compression to use.
    */
   compression?: boolean;
 
@@ -63,6 +63,11 @@ interface UConnectOptions {
    *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
    */
   onUpgrade?: (res: HttpResponse, req: HttpRequest) => boolean;
+
+  /**
+   *  Close handler used to intercept WebSocket close events.
+   */
+  onClose?: (ws: IWebSocket) => boolean;
 }
 
 export function createUConnect({
@@ -313,17 +318,33 @@ export function createUConnect({
     });
   }
 
+  const services = new Map<string, IServiceConstructor>();
   function AddService<TService extends IServiceConstructor>(service: TService, name?: string) {
     if (methods.has(name || service.name))
       throw new Error(`Service ${name || service.name} already exists`);
 
     const localMethods = (service as any).prototype.Methods as Map<string, Method>;
+    if (!localMethods) throw new Error(`Service ${name || service.name} has no Methods`);
+
     for (const [method, descriptor] of localMethods)
       methods.set(Method.FullName(name || service.name, method), descriptor);
+
+    services.set(name || service.name, service);
   }
 
+  function RemoveService(name: string) {
+    if (!methods.has(name)) throw new Error(`Service ${name} doesn't exist`);
+
+    const service = services.get(name)!;
+    const localMethods = (service as any).prototype.Methods as Map<string, Method>;
+    if (!localMethods) throw new Error(`Service ${name} has no Methods`);
+
+    for (const [method, _] of localMethods) methods.delete(Method.FullName(name, method));
+    services.delete(name);
+  }
   return {
     Run,
     AddService,
+    RemoveService,
   };
 }
