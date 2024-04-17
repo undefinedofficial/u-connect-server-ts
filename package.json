@@ -1,10 +1,14 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "files": [
-    "src/**"
+    "dist/**"
   ],
-  "main": "src/index.ts",
+  "main": "dist/index.js",
+  "module": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "type": "commonjs",
+  "private": true,
   "license": "MIT",
   "scripts": {
     "dev": "ts-node-dev --respawn --transpile-only app.ts",
