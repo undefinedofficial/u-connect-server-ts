@@ -23,6 +23,16 @@ class ClientStreamReader {
         this._buffer = [];
         this._finished = false;
     }
+    Continue() {
+        /**
+         * Send message to client continue stream.
+         */
+        this._context.Send({
+            id: this._context.Id,
+            method: this._context.Method,
+            type: 5 /* DataType.STREAM_CLIENT */,
+        });
+    }
     get Current() {
         return this._current;
     }
@@ -35,6 +45,7 @@ class ClientStreamReader {
                     this._current = this._buffer.shift();
                     return resolve(true);
                 }
+                this.Continue();
             };
             this._resolve = next;
             next();
@@ -44,16 +55,9 @@ class ClientStreamReader {
      * Accept message and push to queue for processing.
      */
     Receive(message) {
+        var _a;
         this._buffer.push(message);
-        this._resolve();
-        /**
-         * Send message to client continue stream.
-         */
-        this._context.Send({
-            id: this._context.Id,
-            method: this._context.Method,
-            type: 5 /* DataType.STREAM_CLIENT */,
-        });
+        (_a = this._resolve) === null || _a === void 0 ? void 0 : _a.call(this);
     }
     Finish() {
         this._finished = true;

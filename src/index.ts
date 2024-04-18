@@ -62,12 +62,12 @@ interface UConnectOptions {
   /**
    *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
    */
-  onUpgrade?: (res: HttpResponse, req: HttpRequest) => boolean;
+  onUpgrade?: <UD extends Record<string, any>>(res: HttpResponse, req: HttpRequest) => false | UD;
 
   /**
    *  Close handler used to intercept WebSocket close events.
    */
-  onClose?: (ws: IWebSocket, code: number) => void;
+  onClose?: (ws: IWebSocket, code: number, message: string) => void;
 }
 
 export function createUConnect({
@@ -110,14 +110,19 @@ export function createUConnect({
         return;
       }
 
-      if (onUpgrade?.(res, req) === false) {
-        res.end();
-        return;
+      let userData = {};
+      if (onUpgrade) {
+        userData = onUpgrade(res, req);
+        if (userData === false) {
+          res.end();
+          return;
+        }
       }
 
       res.upgrade<UserData>(
         {
           contexts: new Map(),
+          ...userData,
         },
         SecWebSocketKey,
         SecWebSocketProtocol,
@@ -127,7 +132,6 @@ export function createUConnect({
     },
     open(ws) {
       ws.getUserData().islive = true;
-      console.log("Connection open");
     },
     async message(ws, message, isBinary) {
       try {
@@ -310,7 +314,7 @@ export function createUConnect({
 
       userData.contexts.clear();
 
-      onClose?.(ws, code);
+      onClose?.(ws, code, Buffer.from(message).toString("ascii"));
     },
   });
 

@@ -43,6 +43,7 @@ export declare class ClientStreamReader<T> implements IClientStreamReader<T> {
     private _finished;
     private _resolve;
     constructor(_context: ServerCallContextSource);
+    private Continue;
     get Current(): T;
     MoveNext(): Promise<boolean>;
     /**

@@ -44,17 +44,21 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                 res.writeStatus("423").end();
                 return;
             }
-            if ((onUpgrade === null || onUpgrade === void 0 ? void 0 : onUpgrade(res, req)) === false) {
-                res.end();
-                return;
+            let userData = {};
+            if (onUpgrade) {
+                userData = onUpgrade(res, req);
+                if (userData === false) {
+                    res.end();
+                    return;
+                }
             }
             res.upgrade({
                 contexts: new Map(),
+                ...userData,
             }, SecWebSocketKey, SecWebSocketProtocol, SecWebSocketVersion, context);
         },
         open(ws) {
             ws.getUserData().islive = true;
-            console.log("Connection open");
         },
         async message(ws, message, isBinary) {
             var _a;
@@ -178,7 +182,7 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
             for (const context of userData.contexts.values())
                 await context.Cancel();
             userData.contexts.clear();
-            onClose === null || onClose === void 0 ? void 0 : onClose(ws, code);
+            onClose === null || onClose === void 0 ? void 0 : onClose(ws, code, Buffer.from(message).toString("ascii"));
         },
     });
     function Run() {

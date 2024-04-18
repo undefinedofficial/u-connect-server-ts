@@ -47,11 +47,11 @@ interface UConnectOptions {
     /**
      *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
      */
-    onUpgrade?: (res: HttpResponse, req: HttpRequest) => boolean;
+    onUpgrade?: <UD extends Record<string, any>>(res: HttpResponse, req: HttpRequest) => false | UD;
     /**
      *  Close handler used to intercept WebSocket close events.
      */
-    onClose?: (ws: IWebSocket, code: number) => void;
+    onClose?: (ws: IWebSocket, code: number, message: string) => void;
 }
 export declare function createUConnect({ host, port, path, sendPingsAutomatically, compression, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }?: UConnectOptions): {
     Run: () => void;

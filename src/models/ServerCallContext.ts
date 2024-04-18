@@ -83,6 +83,17 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
 
   constructor(private readonly _context: ServerCallContextSource) {}
 
+  private Continue() {
+    /**
+     * Send message to client continue stream.
+     */
+    this._context.Send({
+      id: this._context.Id,
+      method: this._context.Method,
+      type: DataType.STREAM_CLIENT,
+    });
+  }
+
   get Current(): T {
     return this._current;
   }
@@ -95,6 +106,8 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
           this._current = this._buffer.shift()!;
           return resolve(true);
         }
+
+        this.Continue();
       };
       this._resolve = next;
       next();
@@ -106,16 +119,7 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
    */
   Receive(message: T): void {
     this._buffer.push(message);
-    this._resolve();
-
-    /**
-     * Send message to client continue stream.
-     */
-    this._context.Send({
-      id: this._context.Id,
-      method: this._context.Method,
-      type: DataType.STREAM_CLIENT,
-    });
+    this._resolve?.();
   }
 
   Finish(): void {
