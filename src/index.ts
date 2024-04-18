@@ -67,7 +67,7 @@ interface UConnectOptions {
   /**
    *  Close handler used to intercept WebSocket close events.
    */
-  onClose?: (ws: IWebSocket) => boolean;
+  onClose?: (ws: IWebSocket, code: number) => void;
 }
 
 export function createUConnect({
@@ -81,6 +81,7 @@ export function createUConnect({
   maxLifetime,
   maxPayloadLength,
   onUpgrade,
+  onClose,
 }: UConnectOptions = {}) {
   const methods = new Map<string, Method>();
 
@@ -308,6 +309,8 @@ export function createUConnect({
       for (const context of userData.contexts.values()) await context.Cancel();
 
       userData.contexts.clear();
+
+      onClose?.(ws, code);
     },
   });
 
