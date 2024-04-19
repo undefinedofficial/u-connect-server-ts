@@ -125,7 +125,7 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
 
   Finish(): void {
     this._finished = true;
-    this._resolve();
+    this._resolve?.();
   }
 }
 
@@ -142,6 +142,7 @@ export class ServerStreamWriter<T> implements IServerStreamWriter<T> {
 }
 
 export class ServerCallContextSource extends ServerCallContext {
+  private isCancellationRequested: boolean = false;
   /**
    * Creates a new instance of ServerCallContext on every request for controlling current call.
    *
@@ -175,6 +176,8 @@ export class ServerCallContextSource extends ServerCallContext {
    * @return {Promise<void>} A promise that resolves when the cancellation is complete.
    */
   async Cancel(): Promise<void> {
+    if (this._cancellationTokenCore.IsCancellationRequested) return;
+
     this._clientStreamCore?.Finish();
     return this._cancellationTokenCore.Cancel();
   }
