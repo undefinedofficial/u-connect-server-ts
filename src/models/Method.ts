@@ -1,4 +1,4 @@
-import { DataType } from "../enums";
+import { DataType, Status } from "../enums";
 import { MethodError } from "../errors/MethodError";
 import { IRequest, IResponse } from "../interfaces";
 import { ServerCallContext, ServerCallContextSource } from "./ServerCallContext";
@@ -96,7 +96,11 @@ export class UnaryMethod<I extends IRequest<any>, O extends IResponse<any>> exte
       response.response = (await this.Handler(request.request, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) throw error;
+      if (!(error instanceof MethodError)) {
+        response.status = Status.INTERNAL;
+        response.error = "Internal Server Error";
+        throw error;
+      }
 
       const { status, message } = error;
       response.error = message;
@@ -129,7 +133,11 @@ export class ClientStreamingMethod<I, O> extends Method {
       response.response = (await this.Handler(requestStream, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) throw error;
+      if (!(error instanceof MethodError)) {
+        response.status = Status.INTERNAL;
+        response.error = "Internal Server Error";
+        throw error;
+      }
 
       const { status, message } = error;
       response.error = message;
@@ -162,7 +170,11 @@ export class ServerStreamingMethod<I, O> extends Method {
       await this.Handler(request.request, responseStream, context);
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) throw error;
+      if (!(error instanceof MethodError)) {
+        response.status = Status.INTERNAL;
+        response.error = "Internal Server Error";
+        throw error;
+      }
 
       const { status, message } = error;
       response.error = message;
@@ -198,7 +210,11 @@ export class DuplexStreamingMethod<I, O> extends Method {
       await this.Handler(requestStream, responseStream, context);
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) throw error;
+      if (!(error instanceof MethodError)) {
+        response.status = Status.INTERNAL;
+        response.error = "Internal Server Error";
+        throw error;
+      }
 
       const { status, message } = error;
       response.error = message;

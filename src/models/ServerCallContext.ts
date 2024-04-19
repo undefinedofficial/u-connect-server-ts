@@ -26,8 +26,9 @@ export abstract class ServerCallContext {
     this.Deadline = deadline;
     this.RequestMeta = requestMeta;
     this.CancellationToken = cancellationTokenSource.Token;
+    this.Status = Status.OK;
   }
-  //   public get UserState() {}
+  public abstract GetUserState<T>(): T;
 
   /**
    * Unique for the socket identifier of this task.
@@ -62,7 +63,7 @@ export abstract class ServerCallContext {
   /**
    * Status to send back to client after finishes.
    */
-  public Status = Status.OK;
+  public Status: Status;
 
   /**
    *  Disconnect the current client from the service and sever all ties with him
@@ -153,6 +154,10 @@ export class ServerCallContextSource extends ServerCallContext {
     super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
     this._cancellationTokenCore = cancellationTokenSource;
     this._webSocketCore = webSocket;
+  }
+
+  public GetUserState<T>(): T {
+    return this._webSocketCore.getUserData() as T;
   }
 
   /**
