@@ -62,7 +62,7 @@ interface UConnectOptions {
   /**
    *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
    */
-  onUpgrade?: <UD extends Record<string, any>>(res: HttpResponse, req: HttpRequest) => false | UD;
+  onUpgrade?: (res: HttpResponse, req: HttpRequest) => false | Record<string, any>;
 
   /**
    *  Close handler used to intercept WebSocket close events.
