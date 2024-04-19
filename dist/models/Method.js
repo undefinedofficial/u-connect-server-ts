@@ -52,8 +52,11 @@ class UnaryMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError))
+            if (!(error instanceof MethodError_1.MethodError)) {
+                response.status = 13 /* Status.INTERNAL */;
+                response.error = "Internal Server Error";
                 throw error;
+            }
             const { status, message } = error;
             response.error = message;
             response.status = status || context.Status;
@@ -87,8 +90,11 @@ class ClientStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError))
+            if (!(error instanceof MethodError_1.MethodError)) {
+                response.status = 13 /* Status.INTERNAL */;
+                response.error = "Internal Server Error";
                 throw error;
+            }
             const { status, message } = error;
             response.error = message;
             response.status = status || context.Status;
@@ -121,8 +127,11 @@ class ServerStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError))
+            if (!(error instanceof MethodError_1.MethodError)) {
+                response.status = 13 /* Status.INTERNAL */;
+                response.error = "Internal Server Error";
                 throw error;
+            }
             const { status, message } = error;
             response.error = message;
             response.status = status || context.Status;
@@ -157,8 +166,11 @@ class DuplexStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError))
+            if (!(error instanceof MethodError_1.MethodError)) {
+                response.status = 13 /* Status.INTERNAL */;
+                response.error = "Internal Server Error";
                 throw error;
+            }
             const { status, message } = error;
             response.error = message;
             response.status = status || context.Status;

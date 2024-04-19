@@ -157,7 +157,7 @@ export class ServerCallContextSource extends ServerCallContext {
   }
 
   public GetUserState<T>(): T {
-    return this._webSocketCore.getUserData() as T;
+    return this._webSocketCore.getUserData() as unknown as T;
   }
 
   /**

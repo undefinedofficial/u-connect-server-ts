@@ -5,15 +5,12 @@ const CancellationToken_1 = require("./CancellationToken");
 const MessagePackTransporter_1 = require("../middleware/MessagePackTransporter");
 class ServerCallContext {
     constructor(id, method, cancellationTokenSource, requestMeta, deadline) {
-        /**
-         * Status to send back to client after finishes.
-         */
-        this.Status = 0 /* Status.OK */;
         this.Id = id;
         this.Method = method;
         this.Deadline = deadline;
         this.RequestMeta = requestMeta;
         this.CancellationToken = cancellationTokenSource.Token;
+        this.Status = 0 /* Status.OK */;
     }
 }
 exports.ServerCallContext = ServerCallContext;
@@ -96,6 +93,9 @@ class ServerCallContextSource extends ServerCallContext {
         this._cancellationTokenCore = new CancellationToken_1.CancellationTokenSource();
         this._cancellationTokenCore = cancellationTokenSource;
         this._webSocketCore = webSocket;
+    }
+    GetUserState() {
+        return this._webSocketCore.getUserData();
     }
     /**
      * Returns the current instance of ServerCallContext.

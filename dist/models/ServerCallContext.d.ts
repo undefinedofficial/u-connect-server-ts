@@ -3,6 +3,7 @@ import { IClientStreamReader, IRequest, IResponse, IServerStreamWriter, ITranspo
 import { CancellationToken, CancellationTokenSource } from "./CancellationToken";
 export declare abstract class ServerCallContext {
     constructor(id: number, method: string, cancellationTokenSource: CancellationTokenSource, requestMeta?: RequestMetadata | null, deadline?: number);
+    abstract GetUserState<T>(): T;
     /**
      * Unique for the socket identifier of this task.
      */
@@ -66,6 +67,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @param {number} [deadline] - The deadline for the operation (optional).
      */
     constructor(webSocket: IWebSocket, request: IRequest<any>, deadline?: number);
+    GetUserState<T>(): T;
     /**
      * Returns the current instance of ServerCallContext.
      *
