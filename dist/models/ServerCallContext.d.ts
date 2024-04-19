@@ -59,6 +59,7 @@ export declare class ServerStreamWriter<T> implements IServerStreamWriter<T> {
     Write(message: T): Promise<void>;
 }
 export declare class ServerCallContextSource extends ServerCallContext {
+    private isCancellationRequested;
     /**
      * Creates a new instance of ServerCallContext on every request for controlling current call.
      *

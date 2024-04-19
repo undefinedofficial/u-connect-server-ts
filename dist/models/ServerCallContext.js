@@ -57,8 +57,9 @@ class ClientStreamReader {
         (_a = this._resolve) === null || _a === void 0 ? void 0 : _a.call(this);
     }
     Finish() {
+        var _a;
         this._finished = true;
-        this._resolve();
+        (_a = this._resolve) === null || _a === void 0 ? void 0 : _a.call(this);
     }
 }
 exports.ClientStreamReader = ClientStreamReader;
@@ -87,6 +88,7 @@ class ServerCallContextSource extends ServerCallContext {
     constructor(webSocket, request, deadline) {
         const cancellationTokenSource = new CancellationToken_1.CancellationTokenSource(deadline);
         super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
+        this.isCancellationRequested = false;
         /**
          * CancellationTokenSource for controlling current call cancellation.
          */
@@ -112,6 +114,8 @@ class ServerCallContextSource extends ServerCallContext {
      */
     async Cancel() {
         var _a;
+        if (this._cancellationTokenCore.IsCancellationRequested)
+            return;
         (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
         return this._cancellationTokenCore.Cancel();
     }
