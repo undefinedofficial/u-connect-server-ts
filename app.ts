@@ -84,6 +84,7 @@ class HelloService {
   ) {
     console.log("Duplex method call");
 
+    await responseStream.Write(" Hello ");
     let isAborted = false;
     context.CancellationToken.Register(() => {
       console.log("Duplex stream method call aborted");
