@@ -189,10 +189,11 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
     });
     function Run() {
         app.listen(host, port, (listenSocket) => {
+            const protocol = ssl ? "wss" : "ws";
             if (listenSocket)
-                console.log(`Listening on ws://${host}:${port}${path}`);
+                console.log(`Listening on ${protocol}://${host}:${port}${path}`);
             else
-                console.log(`Failed to listen on port ws://${host}:${port}${path}`);
+                console.log(`Failed to listen on ${protocol}://${host}:${port}${path}`);
         });
     }
     const services = new Map();
