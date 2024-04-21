@@ -339,8 +339,9 @@ export function createUConnect({
 
   function Run() {
     app.listen(host, port, (listenSocket) => {
-      if (listenSocket) console.log(`Listening on ws://${host}:${port}${path}`);
-      else console.log(`Failed to listen on port ws://${host}:${port}${path}`);
+      const protocol = ssl ? "wss" : "ws";
+      if (listenSocket) console.log(`Listening on ${protocol}://${host}:${port}${path}`);
+      else console.log(`Failed to listen on ${protocol}://${host}:${port}${path}`);
     });
   }
 
