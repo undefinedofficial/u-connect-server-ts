@@ -52,8 +52,16 @@ interface UConnectOptions {
      *  Close handler used to intercept WebSocket close events.
      */
     onClose?: (ws: IWebSocket, code: number, message: string) => void;
+    /**
+     *  SSL options
+     */
+    ssl?: {
+        key: string;
+        cert: string;
+        passphrase?: string;
+    };
 }
-export declare function createUConnect({ host, port, path, sendPingsAutomatically, compression, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }?: UConnectOptions): {
+export declare function createUConnect({ host, port, path, sendPingsAutomatically, compression, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, ssl, }?: UConnectOptions): {
     Run: () => void;
     AddService: <TService extends IServiceConstructor>(service: TService, name?: string) => void;
     RemoveService: (name: string) => void;

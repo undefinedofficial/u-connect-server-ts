@@ -21,9 +21,11 @@ const ResponseError_1 = require("./errors/ResponseError");
 __exportStar(require("./decorators"), exports);
 var models_2 = require("./models");
 Object.defineProperty(exports, "ServerCallContext", { enumerable: true, get: function () { return models_2.ServerCallContext; } });
-function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect", sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, } = {}) {
+function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect", sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, ssl, } = {}) {
     const methods = new Map();
-    const app = (0, uWebSockets_js_1.App)();
+    const app = ssl
+        ? (0, uWebSockets_js_1.SSLApp)({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
+        : (0, uWebSockets_js_1.App)();
     app.ws(path, {
         compression: compression ? uWebSockets_js_1.SHARED_COMPRESSOR : uWebSockets_js_1.DISABLED,
         idleTimeout,
