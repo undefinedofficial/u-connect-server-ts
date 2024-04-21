@@ -1,4 +1,11 @@
-import { App, DISABLED, HttpRequest, HttpResponse, SHARED_COMPRESSOR } from "uWebSockets.js";
+import {
+  App,
+  DISABLED,
+  HttpRequest,
+  HttpResponse,
+  SHARED_COMPRESSOR,
+  SSLApp,
+} from "uWebSockets.js";
 import { Method, MethodType, ServerCallContextSource } from "./models";
 import { IWebSocket, UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
@@ -68,6 +75,15 @@ interface UConnectOptions {
    *  Close handler used to intercept WebSocket close events.
    */
   onClose?: (ws: IWebSocket, code: number, message: string) => void;
+
+  /**
+   *  SSL options
+   */
+  ssl?: {
+    key: string;
+    cert: string;
+    passphrase?: string;
+  };
 }
 
 export function createUConnect({
@@ -82,10 +98,13 @@ export function createUConnect({
   maxPayloadLength,
   onUpgrade,
   onClose,
+  ssl,
 }: UConnectOptions = {}) {
   const methods = new Map<string, Method>();
 
-  const app = App();
+  const app = ssl
+    ? SSLApp({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
+    : App();
 
   app.ws<UserData>(path, {
     compression: compression ? SHARED_COMPRESSOR : DISABLED,
