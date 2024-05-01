@@ -63,7 +63,22 @@ export abstract class Method {
     this.service = service;
   }
 
-  abstract Invoke<I, O>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
+  abstract Invoke<I>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
+
+  protected HandleError(error: unknown, response: IResponse<any>, context: ServerCallContext) {
+    if (error instanceof MethodError) {
+      const { status, message } = error;
+      response.error = message;
+      response.status = status || context.Status;
+      return;
+    }
+
+    response.status = Status.INTERNAL;
+    response.error = "Internal Server Error";
+
+    console.error(error);
+    process.exit(1);
+  }
 
   /**
    * Gets the fully qualified name of the method.
@@ -96,15 +111,7 @@ export class UnaryMethod<I extends IRequest<any>, O extends IResponse<any>> exte
       response.response = (await this.Handler(request.request, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) {
-        response.status = Status.INTERNAL;
-        response.error = "Internal Server Error";
-        throw error;
-      }
-
-      const { status, message } = error;
-      response.error = message;
-      response.status = status || context.Status;
+      this.HandleError(error, response, context);
     } finally {
       return context.Send(response);
     }
@@ -133,15 +140,7 @@ export class ClientStreamingMethod<I, O> extends Method {
       response.response = (await this.Handler(requestStream, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) {
-        response.status = Status.INTERNAL;
-        response.error = "Internal Server Error";
-        throw error;
-      }
-
-      const { status, message } = error;
-      response.error = message;
-      response.status = status || context.Status;
+      this.HandleError(error, response, context);
     } finally {
       return context.Send(response);
     }
@@ -170,15 +169,7 @@ export class ServerStreamingMethod<I, O> extends Method {
       await this.Handler(request.request, responseStream, context);
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) {
-        response.status = Status.INTERNAL;
-        response.error = "Internal Server Error";
-        throw error;
-      }
-
-      const { status, message } = error;
-      response.error = message;
-      response.status = status || context.Status;
+      this.HandleError(error, response, context);
     } finally {
       return context.Send(response);
     }
@@ -210,15 +201,7 @@ export class DuplexStreamingMethod<I, O> extends Method {
       await this.Handler(requestStream, responseStream, context);
       response.status = context.Status;
     } catch (error) {
-      if (!(error instanceof MethodError)) {
-        response.status = Status.INTERNAL;
-        response.error = "Internal Server Error";
-        throw error;
-      }
-
-      const { status, message } = error;
-      response.error = message;
-      response.status = status || context.Status;
+      this.HandleError(error, response, context);
     } finally {
       return context.Send(response);
     }

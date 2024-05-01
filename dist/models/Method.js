@@ -6,6 +6,13 @@ const MethodError_1 = require("../errors/MethodError");
  * A generic representation of a remote method.
  */
 class Method {
+    /**
+     * Gets the fully qualified name of the method. On the server side, methods are dispatched
+     * based on this name.
+     */
+    get FullName() {
+        return Method.FullName(this.ServiceName, this.Name);
+    }
     constructor(type, service, name, handler) {
         this.Type = type;
         this.ServiceName = service.constructor.name;
@@ -13,12 +20,17 @@ class Method {
         this.Handler = handler;
         this.service = service;
     }
-    /**
-     * Gets the fully qualified name of the method. On the server side, methods are dispatched
-     * based on this name.
-     */
-    get FullName() {
-        return Method.FullName(this.ServiceName, this.Name);
+    HandleError(error, response, context) {
+        if (error instanceof MethodError_1.MethodError) {
+            const { status, message } = error;
+            response.error = message;
+            response.status = status || context.Status;
+            return;
+        }
+        response.status = 13 /* Status.INTERNAL */;
+        response.error = "Internal Server Error";
+        console.error(error);
+        process.exit(1);
     }
     /**
      * Gets the fully qualified name of the method.
@@ -52,14 +64,7 @@ class UnaryMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError)) {
-                response.status = 13 /* Status.INTERNAL */;
-                response.error = "Internal Server Error";
-                throw error;
-            }
-            const { status, message } = error;
-            response.error = message;
-            response.status = status || context.Status;
+            this.HandleError(error, response, context);
         }
         finally {
             return context.Send(response);
@@ -90,14 +95,7 @@ class ClientStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError)) {
-                response.status = 13 /* Status.INTERNAL */;
-                response.error = "Internal Server Error";
-                throw error;
-            }
-            const { status, message } = error;
-            response.error = message;
-            response.status = status || context.Status;
+            this.HandleError(error, response, context);
         }
         finally {
             return context.Send(response);
@@ -127,14 +125,7 @@ class ServerStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError)) {
-                response.status = 13 /* Status.INTERNAL */;
-                response.error = "Internal Server Error";
-                throw error;
-            }
-            const { status, message } = error;
-            response.error = message;
-            response.status = status || context.Status;
+            this.HandleError(error, response, context);
         }
         finally {
             return context.Send(response);
@@ -166,14 +157,7 @@ class DuplexStreamingMethod extends Method {
             response.status = context.Status;
         }
         catch (error) {
-            if (!(error instanceof MethodError_1.MethodError)) {
-                response.status = 13 /* Status.INTERNAL */;
-                response.error = "Internal Server Error";
-                throw error;
-            }
-            const { status, message } = error;
-            response.error = message;
-            response.status = status || context.Status;
+            this.HandleError(error, response, context);
         }
         finally {
             return context.Send(response);

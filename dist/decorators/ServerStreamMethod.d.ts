@@ -1,7 +1,7 @@
 import { ActionResultPromiceVoid, ActionResultVoid, IServerStreamWriter } from "../interfaces";
 import { IService } from "../interfaces/IService";
 import { ServerCallContext } from "../models";
-export declare type ActionServerStreamMethod<I, O> = (request: I, responseStream: O, context: ServerCallContext) => ActionResultPromiceVoid | ActionResultVoid;
+export type ActionServerStreamMethod<I, O> = (request: I, responseStream: O, context: ServerCallContext) => ActionResultPromiceVoid | ActionResultVoid;
 /**
  * @type {Decorator}
  */

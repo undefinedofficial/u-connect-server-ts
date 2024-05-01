@@ -9,11 +9,12 @@ import {
 import { Method, MethodType, ServerCallContextSource } from "./models";
 import { IWebSocket, UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
-import { ResponseError } from "./errors/ResponseError";
+import { ResponseError, MethodError } from "./errors";
 
 export * from "./decorators";
 export { ServerCallContext } from "./models";
 export { IClientStreamReader, IServerStreamWriter } from "./interfaces";
+export { Status, MethodError };
 
 export interface IServiceConstructor {
   new (...args: any[]): any;
@@ -118,11 +119,11 @@ export function createUConnect({
      * Upgrades the connection to WebSocket if the Origin header is present.
      */
     upgrade(res, req, context) {
-      const origin = req.getHeader("origin");
       const SecWebSocketKey = req.getHeader("sec-websocket-key");
       const SecWebSocketProtocol = req.getHeader("sec-websocket-protocol");
       const SecWebSocketVersion = req.getHeader("sec-websocket-version");
-      console.log("upgrade", origin, SecWebSocketProtocol);
+      // const origin = req.getHeader("origin");
+      // console.log("upgrade", origin, SecWebSocketProtocol);
 
       if (SecWebSocketProtocol !== "u-connect-web") {
         res.writeStatus("423").end();
@@ -193,10 +194,10 @@ export function createUConnect({
                 Status.UNIMPLEMENTED,
                 `Method ${request.method} is not unary`
               );
-
             const context = new ServerCallContextSource(ws, request);
             contexts.set(request.id, context);
             await method.Invoke(request, context);
+            contexts.delete(request.id);
             break;
           }
 
@@ -248,6 +249,7 @@ export function createUConnect({
               const context = new ServerCallContextSource(ws, request);
               contexts.set(request.id, context);
               await method.Invoke(request, context);
+              contexts.delete(request.id);
             }
             break;
 
@@ -320,7 +322,7 @@ export function createUConnect({
             }),
             true
           );
-          console.error("Internal Server Error", error);
+          throw error;
         }
       }
     },

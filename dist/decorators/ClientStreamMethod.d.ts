@@ -1,7 +1,7 @@
 import { ActionResultPromiceResponse, ActionResultResponse, IClientStreamReader } from "../interfaces";
 import { IService } from "../interfaces/IService";
 import { ServerCallContext } from "../models";
-export declare type ActionClientStreamMethod<I extends IClientStreamReader<any>, O> = (request: I, context: ServerCallContext) => ActionResultPromiceResponse<O> | ActionResultResponse<O>;
+export type ActionClientStreamMethod<I extends IClientStreamReader<any>, O> = (request: I, context: ServerCallContext) => ActionResultPromiceResponse<O> | ActionResultResponse<O>;
 /**
  * @type {Decorator}
  */

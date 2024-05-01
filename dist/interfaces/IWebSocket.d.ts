@@ -4,5 +4,5 @@ export interface UserData {
     islive?: boolean;
     contexts: Map<number, ServerCallContextSource>;
 }
-export declare type IWebSocket = WebSocket<UserData>;
+export type IWebSocket = WebSocket<UserData>;
 //# sourceMappingURL=IWebSocket.d.ts.map

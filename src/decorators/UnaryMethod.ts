@@ -8,13 +8,24 @@ export type ActionUnaryMethod<I, O> = (
 ) => ActionResultPromiceResponse<O> | ActionResultResponse<O>;
 
 /**
+ * Extracts the input type from an ActionUnaryMethod
+ */
+export type ExtractUnaryInput<T> = T extends ActionUnaryMethod<infer I, any> ? I : never;
+/**
+ * Extracts the output type from an ActionUnaryMethod
+ */
+export type ExtractUnaryOutput<T> = T extends ActionUnaryMethod<any, infer O> ? O : never;
+
+/**
  * @type {Decorator}
  */
 export function UnaryMethod<M extends ActionUnaryMethod<any, any>>(name?: string) {
   return (
     target: IService,
     propertyName: string,
-    descriptor: TypedPropertyDescriptor<ActionUnaryMethod<Parameters<M>[0], ReturnType<M>>>
+    descriptor: TypedPropertyDescriptor<
+      ActionUnaryMethod<ExtractUnaryInput<M>, ExtractUnaryOutput<M>>
+    >
   ) => {
     const method = descriptor.value!;
     if (!target.Methods) target.Methods = new Map<string, Method>();

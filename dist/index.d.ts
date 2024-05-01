@@ -1,8 +1,11 @@
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
 import { IWebSocket } from "./interfaces";
+import { Status } from "./enums";
+import { MethodError } from "./errors";
 export * from "./decorators";
 export { ServerCallContext } from "./models";
 export { IClientStreamReader, IServerStreamWriter } from "./interfaces";
+export { Status, MethodError };
 export interface IServiceConstructor {
     new (...args: any[]): any;
 }

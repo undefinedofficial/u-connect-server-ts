@@ -14,10 +14,11 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUConnect = exports.ServerCallContext = void 0;
+exports.createUConnect = exports.MethodError = exports.ServerCallContext = void 0;
 const uWebSockets_js_1 = require("uWebSockets.js");
 const models_1 = require("./models");
-const ResponseError_1 = require("./errors/ResponseError");
+const errors_1 = require("./errors");
+Object.defineProperty(exports, "MethodError", { enumerable: true, get: function () { return errors_1.MethodError; } });
 __exportStar(require("./decorators"), exports);
 var models_2 = require("./models");
 Object.defineProperty(exports, "ServerCallContext", { enumerable: true, get: function () { return models_2.ServerCallContext; } });
@@ -37,11 +38,11 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
          * Upgrades the connection to WebSocket if the Origin header is present.
          */
         upgrade(res, req, context) {
-            const origin = req.getHeader("origin");
             const SecWebSocketKey = req.getHeader("sec-websocket-key");
             const SecWebSocketProtocol = req.getHeader("sec-websocket-protocol");
             const SecWebSocketVersion = req.getHeader("sec-websocket-version");
-            console.log("upgrade", origin, SecWebSocketProtocol);
+            // const origin = req.getHeader("origin");
+            // console.log("upgrade", origin, SecWebSocketProtocol);
             if (SecWebSocketProtocol !== "u-connect-web") {
                 res.writeStatus("423").end();
                 return;
@@ -66,7 +67,7 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
             var _a;
             try {
                 if (!isBinary)
-                    throw new ResponseError_1.ResponseError(0, "", 3 /* Status.INVALID_ARGUMENT */, "Not binary");
+                    throw new errors_1.ResponseError(0, "", 3 /* Status.INVALID_ARGUMENT */, "Not binary");
                 const request = models_1.ServerCallContextSource.transporter.deserialize(message);
                 if (!methods.has(request.method)) {
                     ws.send(models_1.ServerCallContextSource.transporter.serialize({
@@ -92,17 +93,18 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                             break;
                         const method = methods.get(request.method);
                         if (method.Type !== 0 /* MethodType.Unary */)
-                            throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not unary`);
+                            throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not unary`);
                         const context = new models_1.ServerCallContextSource(ws, request);
                         contexts.set(request.id, context);
                         await method.Invoke(request, context);
+                        contexts.delete(request.id);
                         break;
                     }
                     case 5 /* DataType.STREAM_CLIENT */: {
                         const method = methods.get(request.method);
                         if (method.Type !== 1 /* MethodType.ClientStreaming */ &&
                             method.Type !== 3 /* MethodType.DuplexStreaming */) {
-                            throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not input streaming`);
+                            throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not input streaming`);
                         }
                         if (!contexts.has(request.id) && method.Type === 1 /* MethodType.ClientStreaming */) {
                             const context = new models_1.ServerCallContextSource(ws, request);
@@ -118,14 +120,15 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                     case 6 /* DataType.STREAM_SERVER */:
                         {
                             if (contexts.has(request.id))
-                                throw new ResponseError_1.ResponseError(request.id, request.method, 14 /* Status.UNAVAILABLE */, `Method ${request.method} is already streaming`);
+                                throw new errors_1.ResponseError(request.id, request.method, 14 /* Status.UNAVAILABLE */, `Method ${request.method} is already streaming`);
                             const method = methods.get(request.method);
                             if (method.Type !== 2 /* MethodType.ServerStreaming */ &&
                                 method.Type !== 3 /* MethodType.DuplexStreaming */)
-                                throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not output streaming`);
+                                throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not output streaming`);
                             const context = new models_1.ServerCallContextSource(ws, request);
                             contexts.set(request.id, context);
                             await method.Invoke(request, context);
+                            contexts.delete(request.id);
                         }
                         break;
                     case 7 /* DataType.STREAM_DUPLEX */: {
@@ -133,7 +136,7 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                             break;
                         const method = methods.get(request.method);
                         if (method.Type !== 3 /* MethodType.DuplexStreaming */)
-                            throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not duplex streaming`);
+                            throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not duplex streaming`);
                         const context = new models_1.ServerCallContextSource(ws, request);
                         contexts.set(request.id, context);
                         await method.Invoke(request, context);
@@ -146,17 +149,17 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                         const method = methods.get(request.method);
                         if (method.Type !== 1 /* MethodType.ClientStreaming */ &&
                             method.Type !== 3 /* MethodType.DuplexStreaming */)
-                            throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not stream`);
+                            throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, `Method ${request.method} is not stream`);
                         (_a = contexts.get(request.id)._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
                         contexts.delete(request.id);
                         break;
                     }
                     default:
-                        throw new ResponseError_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, "Not implemented");
+                        throw new errors_1.ResponseError(request.id, request.method, 12 /* Status.UNIMPLEMENTED */, "Not implemented");
                 }
             }
             catch (error) {
-                if (error instanceof ResponseError_1.ResponseError) {
+                if (error instanceof errors_1.ResponseError) {
                     ws.send(models_1.ServerCallContextSource.transporter.serialize({
                         id: error.id,
                         type: 9 /* DataType.ABORT */,
@@ -173,7 +176,7 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
                         status: 13 /* Status.INTERNAL */,
                         error: "Internal server error",
                     }), true);
-                    console.error("Internal Server Error", error);
+                    throw error;
                 }
             }
         },

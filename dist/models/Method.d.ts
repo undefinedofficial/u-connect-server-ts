@@ -41,7 +41,8 @@ export declare abstract class Method {
      */
     service: Object;
     constructor(type: MethodType, service: Object, name: string, handler: (...args: any[]) => any);
-    abstract Invoke<I, O>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
+    abstract Invoke<I>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
+    protected HandleError(error: unknown, response: IResponse<any>, context: ServerCallContext): void;
     /**
      * Gets the fully qualified name of the method.
      * @param serviceName - The name of the service.

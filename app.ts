@@ -7,6 +7,8 @@ import {
   ClientStreamMethod,
   ServerStreamMethod,
   DuplexStreamMethod,
+  Status,
+  MethodError,
 } from "./src";
 
 const generate = (max: number, min: number = 0) => Math.floor(Math.random() * (max - min) + min);
@@ -22,9 +24,15 @@ class HelloService {
       console.log("Unary method call aborted", name);
       isAborted = true;
     });
+
     const sleepMs = generate(5000, 1000);
     await sleep(sleepMs);
     if (isAborted) return;
+
+    /**
+     * Example of throwing an error:
+     *    throw new MethodError(Status.PERMISSION_DENIED, "Permission Denied");
+     */
 
     return `Hello ${name} after ${sleepMs}ms`;
   }
