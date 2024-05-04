@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerCallContextSource = exports.ServerStreamWriter = exports.ClientStreamReader = exports.ServerCallContext = void 0;
+const enums_1 = require("../enums");
 const CancellationToken_1 = require("./CancellationToken");
 const MessagePackTransporter_1 = require("../middleware/MessagePackTransporter");
 class ServerCallContext {
@@ -10,7 +11,7 @@ class ServerCallContext {
         this.Deadline = deadline;
         this.RequestMeta = requestMeta;
         this.CancellationToken = cancellationTokenSource.Token;
-        this.Status = 0 /* Status.OK */;
+        this.Status = enums_1.Status.OK;
     }
 }
 exports.ServerCallContext = ServerCallContext;
@@ -27,7 +28,7 @@ class ClientStreamReader {
         this._context.Send({
             id: this._context.Id,
             method: this._context.Method,
-            type: 5 /* DataType.STREAM_CLIENT */,
+            type: enums_1.DataType.STREAM_CLIENT,
         });
     }
     get Current() {
@@ -71,7 +72,7 @@ class ServerStreamWriter {
         return this._context.Send({
             id: this._context.Id,
             method: this._context.Method,
-            type: 6 /* DataType.STREAM_SERVER */,
+            type: enums_1.DataType.STREAM_SERVER,
             response: message,
         });
     }

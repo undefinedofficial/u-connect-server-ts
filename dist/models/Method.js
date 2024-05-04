@@ -1,7 +1,20 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DuplexStreamingMethod = exports.ServerStreamingMethod = exports.ClientStreamingMethod = exports.UnaryMethod = exports.Method = void 0;
+exports.DuplexStreamingMethod = exports.ServerStreamingMethod = exports.ClientStreamingMethod = exports.UnaryMethod = exports.Method = exports.MethodType = void 0;
+const enums_1 = require("../enums");
 const MethodError_1 = require("../errors/MethodError");
+/**  Method types supported by u-connect. */
+var MethodType;
+(function (MethodType) {
+    /** Single request sent from client, single response received from server. */
+    MethodType[MethodType["Unary"] = 0] = "Unary";
+    /** Stream of request sent from client, single response received from server. */
+    MethodType[MethodType["ClientStreaming"] = 1] = "ClientStreaming";
+    /** Single request sent from client, stream of responses received from server. */
+    MethodType[MethodType["ServerStreaming"] = 2] = "ServerStreaming";
+    /** Both server and client can stream arbitrary number of requests and responses simultaneously. */
+    MethodType[MethodType["DuplexStreaming"] = 3] = "DuplexStreaming";
+})(MethodType || (exports.MethodType = MethodType = {}));
 /**
  * A generic representation of a remote method.
  */
@@ -27,10 +40,9 @@ class Method {
             response.status = status || context.Status;
             return;
         }
-        response.status = 13 /* Status.INTERNAL */;
+        response.status = enums_1.Status.INTERNAL;
         response.error = "Internal Server Error";
-        console.error(error);
-        process.exit(1);
+        throw error;
     }
     /**
      * Gets the fully qualified name of the method.
@@ -47,7 +59,7 @@ exports.Method = Method;
  */
 class UnaryMethod extends Method {
     constructor(service, name, handler) {
-        super(0 /* MethodType.Unary */, service, name, handler);
+        super(MethodType.Unary, service, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -57,7 +69,7 @@ class UnaryMethod extends Method {
         const response = {
             id: request.id,
             method: request.method,
-            type: 3 /* DataType.UNARY_CLIENT */,
+            type: enums_1.DataType.UNARY_CLIENT,
         };
         try {
             response.response = (_a = (await this.Handler(request.request, context))) !== null && _a !== void 0 ? _a : null;
@@ -77,7 +89,7 @@ exports.UnaryMethod = UnaryMethod;
  */
 class ClientStreamingMethod extends Method {
     constructor(service, name, handler) {
-        super(1 /* MethodType.ClientStreaming */, service, name, handler);
+        super(MethodType.ClientStreaming, service, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -87,7 +99,7 @@ class ClientStreamingMethod extends Method {
         const response = {
             id: request.id,
             method: request.method,
-            type: 8 /* DataType.STREAM_END */,
+            type: enums_1.DataType.STREAM_END,
         };
         try {
             const requestStream = context.CreateClientStreamReader();
@@ -108,7 +120,7 @@ exports.ClientStreamingMethod = ClientStreamingMethod;
  */
 class ServerStreamingMethod extends Method {
     constructor(service, name, handler) {
-        super(2 /* MethodType.ServerStreaming */, service, name, handler);
+        super(MethodType.ServerStreaming, service, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -117,7 +129,7 @@ class ServerStreamingMethod extends Method {
         const response = {
             id: request.id,
             method: request.method,
-            type: 8 /* DataType.STREAM_END */,
+            type: enums_1.DataType.STREAM_END,
         };
         try {
             const responseStream = context.CreateServerStreamWriter();
@@ -138,7 +150,7 @@ exports.ServerStreamingMethod = ServerStreamingMethod;
  */
 class DuplexStreamingMethod extends Method {
     constructor(service, name, handler) {
-        super(3 /* MethodType.DuplexStreaming */, service, name, handler);
+        super(MethodType.DuplexStreaming, service, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -148,7 +160,7 @@ class DuplexStreamingMethod extends Method {
         const response = {
             id: request.id,
             method: request.method,
-            type: 8 /* DataType.STREAM_END */,
+            type: enums_1.DataType.STREAM_END,
         };
         try {
             const requestStream = context.CreateClientStreamReader();

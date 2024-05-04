@@ -76,8 +76,7 @@ export abstract class Method {
     response.status = Status.INTERNAL;
     response.error = "Internal Server Error";
 
-    console.error(error);
-    process.exit(1);
+    throw error;
   }
 
   /**
