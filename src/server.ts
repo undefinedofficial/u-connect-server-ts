@@ -10,6 +10,8 @@ import { Method, MethodType, ServerCallContextSource } from "./models";
 import { IWebSocket, UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
 import { ResponseError } from "./errors";
+import { Request } from "./models/Request";
+import { Response } from "./models/Response";
 
 interface IServiceConstructor {
   new (...args: any[]): any;
@@ -149,127 +151,45 @@ export function createUConnect({
       ws.getUserData().islive = true;
     },
     async message(ws, message, isBinary) {
+      if (!isBinary) return ws.end(1005, "Message is not binary");
+
+      const { contexts } = ws.getUserData();
+      let request: Request<unknown>;
       try {
-        if (!isBinary) throw new ResponseError(0, "", Status.INVALID_ARGUMENT, "Not binary");
-
-        const request = ServerCallContextSource.transporter.deserialize(message);
-
-        if (!methods.has(request.method)) {
-          ws.send(
-            ServerCallContextSource.transporter.serialize({
-              id: request.id,
-              type: request.type,
-              method: request.method,
-              status: Status.NOT_FOUND,
-              error: "Service not found",
-            }),
-            true
-          );
+        request = Request.Deserialize(message);
+      } catch (error) {
+        console.warn(error);
+        return ws.end(1007, "Invalid message");
+      }
+      try {
+        if (request.type === DataType.ABORT) {
+          if (contexts.has(request.id)) {
+            await contexts.get(request.id)!.Cancel();
+            contexts.delete(request.id);
+          }
           return;
         }
 
-        const { contexts } = ws.getUserData();
-        switch (request.type) {
-          case DataType.ABORT: {
-            if (contexts.has(request.id)) {
-              await contexts.get(request.id)!.Cancel();
-              contexts.delete(request.id);
-            }
-            break;
+        if (!methods.has(request.method))
+          throw new ResponseError(
+            request.id,
+            request.method,
+            Status.NOT_FOUND,
+            "Service not found"
+          );
+
+        const method = methods.get(request.method)!;
+
+        if (contexts.has(request.id)) {
+          if (
+            request.type === DataType.STREAM_CLIENT &&
+            (method.Type === MethodType.ClientStreaming ||
+              method.Type === MethodType.DuplexStreaming)
+          ) {
+            contexts.get(request.id)!.Receive(request);
+            return;
           }
-
-          case DataType.UNARY_CLIENT: {
-            if (contexts.has(request.id)) break;
-
-            const method = methods.get(request.method)!;
-            if (method.Type !== MethodType.Unary)
-              throw new ResponseError(
-                request.id,
-                request.method,
-                Status.UNIMPLEMENTED,
-                `Method ${request.method} is not unary`
-              );
-            const context = new ServerCallContextSource(ws, request);
-            contexts.set(request.id, context);
-            await method.Invoke(request, context);
-            contexts.delete(request.id);
-            break;
-          }
-
-          case DataType.STREAM_CLIENT: {
-            const method = methods.get(request.method)!;
-            if (
-              method.Type !== MethodType.ClientStreaming &&
-              method.Type !== MethodType.DuplexStreaming
-            ) {
-              throw new ResponseError(
-                request.id,
-                request.method,
-                Status.UNIMPLEMENTED,
-                `Method ${request.method} is not input streaming`
-              );
-            }
-
-            if (!contexts.has(request.id) && method.Type === MethodType.ClientStreaming) {
-              const context = new ServerCallContextSource(ws, request);
-              contexts.set(request.id, context);
-              await method.Invoke(request, context);
-              contexts.delete(request.id);
-            } else {
-              contexts.get(request.id)!.Receive(request);
-            }
-            break;
-          }
-          case DataType.STREAM_SERVER:
-            {
-              if (contexts.has(request.id))
-                throw new ResponseError(
-                  request.id,
-                  request.method,
-                  Status.UNAVAILABLE,
-                  `Method ${request.method} is already streaming`
-                );
-              const method = methods.get(request.method)!;
-              if (
-                method.Type !== MethodType.ServerStreaming &&
-                method.Type !== MethodType.DuplexStreaming
-              )
-                throw new ResponseError(
-                  request.id,
-                  request.method,
-                  Status.UNIMPLEMENTED,
-                  `Method ${request.method} is not output streaming`
-                );
-
-              const context = new ServerCallContextSource(ws, request);
-              contexts.set(request.id, context);
-              await method.Invoke(request, context);
-              contexts.delete(request.id);
-            }
-            break;
-
-          case DataType.STREAM_DUPLEX: {
-            if (contexts.has(request.id)) break;
-
-            const method = methods.get(request.method)!;
-            if (method.Type !== MethodType.DuplexStreaming)
-              throw new ResponseError(
-                request.id,
-                request.method,
-                Status.UNIMPLEMENTED,
-                `Method ${request.method} is not duplex streaming`
-              );
-            const context = new ServerCallContextSource(ws, request);
-            contexts.set(request.id, context);
-            await method.Invoke(request, context);
-            contexts.delete(request.id);
-            break;
-          }
-
-          case DataType.STREAM_END: {
-            if (!contexts.has(request.id)) break;
-
-            const method = methods.get(request.method)!;
+          if (request.type === DataType.STREAM_END) {
             if (
               method.Type !== MethodType.ClientStreaming &&
               method.Type !== MethodType.DuplexStreaming
@@ -278,45 +198,44 @@ export function createUConnect({
                 request.id,
                 request.method,
                 Status.UNIMPLEMENTED,
-                `Method ${request.method} is not stream`
+                `Method ${request.method} is not input stream`
               );
 
-            contexts.get(request.id)!._clientStreamCore?.Finish();
+            contexts.get(request.id)!.Finish();
             contexts.delete(request.id);
-            break;
+            return;
           }
 
-          default:
-            throw new ResponseError(
-              request.id,
-              request.method,
-              Status.UNIMPLEMENTED,
-              "Not implemented"
-            );
+          throw new ResponseError(
+            request.id,
+            request.method,
+            Status.ALREADY_EXISTS,
+            `Request ${request.id} in processing`
+          );
         }
+
+        const context = new ServerCallContextSource(ws, request);
+        contexts.set(request.id, context);
+        await method.Invoke(request, context);
+        contexts.delete(request.id);
       } catch (error) {
+        contexts.delete(request.id);
+        const response = new Response(
+          request.id,
+          request.method,
+          DataType.ABORT,
+          null,
+          Status.INTERNAL,
+          null,
+          "Internal server error"
+        );
+
         if (error instanceof ResponseError) {
-          ws.send(
-            ServerCallContextSource.transporter.serialize({
-              id: error.id,
-              type: DataType.ABORT,
-              method: error.method,
-              status: error.status,
-              error: error.message,
-            }),
-            true
-          );
+          response.status = error.status;
+          response.error = error.message;
+          ws.send(Response.Serialize(response), true);
         } else {
-          ws.send(
-            ServerCallContextSource.transporter.serialize({
-              id: 0,
-              type: DataType.ABORT,
-              method: "",
-              status: Status.INTERNAL,
-              error: "Internal server error",
-            }),
-            true
-          );
+          ws.send(Response.Serialize(response), true);
           throw error;
         }
       }

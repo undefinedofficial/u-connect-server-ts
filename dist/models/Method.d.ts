@@ -1,4 +1,5 @@
-import { IRequest, IResponse } from "../interfaces";
+import { Request } from "./Request";
+import { Response } from "./Response";
 import { ServerCallContext, ServerCallContextSource } from "./ServerCallContext";
 /**  Method types supported by u-connect. */
 export declare const enum MethodType {
@@ -41,8 +42,8 @@ export declare abstract class Method {
      */
     service: Object;
     constructor(type: MethodType, service: Object, name: string, handler: (...args: any[]) => any);
-    abstract Invoke<I>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
-    protected HandleError(error: unknown, response: IResponse<any>, context: ServerCallContext): void;
+    abstract Invoke<I>(request: Request<I>, context: ServerCallContext): Promise<void>;
+    protected HandleError(error: unknown, response: Response<any>, context: ServerCallContext): void;
     /**
      * Gets the fully qualified name of the method.
      * @param serviceName - The name of the service.
@@ -53,12 +54,12 @@ export declare abstract class Method {
 /**
  * A non-generic representation of a remote unary method.
  */
-export declare class UnaryMethod<I extends IRequest<any>, O extends IResponse<any>> extends Method {
+export declare class UnaryMethod<I extends Request<any>, O extends Response<any>> extends Method {
     constructor(service: Object, name: string, handler: (...args: any[]) => any);
     /**
      * Invoke handler for the method.
      */
-    Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void>;
+    Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
 }
 /**
  * A non-generic representation of a remote client streaming method.
@@ -68,7 +69,7 @@ export declare class ClientStreamingMethod<I, O> extends Method {
     /**
      * Invoke handler for the method.
      */
-    Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void>;
+    Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
 }
 /**
  * A non-generic representation of a remote server streaming method.
@@ -78,7 +79,7 @@ export declare class ServerStreamingMethod<I, O> extends Method {
     /**
      * Invoke handler for the method.
      */
-    Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void>;
+    Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
 }
 /**
  * A non-generic representation of a remote duplex streaming method.
@@ -89,6 +90,6 @@ export declare class DuplexStreamingMethod<I, O> extends Method {
      * Invoke handler for the method.
      *  @param request - The request object.
      */
-    Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void>;
+    Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
 }
 //# sourceMappingURL=Method.d.ts.map

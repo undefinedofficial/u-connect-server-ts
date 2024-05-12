@@ -3,7 +3,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerCallContextSource = exports.ServerStreamWriter = exports.ClientStreamReader = exports.ServerCallContext = void 0;
 const enums_1 = require("../enums");
 const CancellationToken_1 = require("./CancellationToken");
-const MessagePackTransporter_1 = require("../middleware/MessagePackTransporter");
+const Response_1 = require("./Response");
 class ServerCallContext {
     constructor(id, method, cancellationTokenSource, requestMeta, deadline) {
         this.Id = id;
@@ -128,6 +128,10 @@ class ServerCallContextSource extends ServerCallContext {
         var _a;
         (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Receive(request.request);
     }
+    Finish() {
+        var _a;
+        (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
+    }
     /**
      * Creates a new instance of ClientStreamReader and returns it.
      *
@@ -177,10 +181,9 @@ class ServerCallContextSource extends ServerCallContext {
         return new Promise((resolve, reject) => {
             if (webSocket.getUserData().islive == false)
                 return reject("Connection is not live");
-            webSocket.send(ServerCallContextSource.transporter.serialize(response), true);
+            webSocket.send(Response_1.Response.Serialize(response), true);
             resolve();
         });
     }
 }
 exports.ServerCallContextSource = ServerCallContextSource;
-ServerCallContextSource.transporter = MessagePackTransporter_1.MessagePackTransporter;

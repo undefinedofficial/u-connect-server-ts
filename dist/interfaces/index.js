@@ -16,10 +16,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
 Object.defineProperty(exports, "__esModule", { value: true });
 __exportStar(require("./Action"), exports);
 __exportStar(require("./IClientStreamReader"), exports);
-__exportStar(require("./IRequest"), exports);
-__exportStar(require("./IResponse"), exports);
 __exportStar(require("./IServerStreamWriter"), exports);
 __exportStar(require("./IService"), exports);
-__exportStar(require("./ITransporter"), exports);
 __exportStar(require("./IWebSocket"), exports);
 __exportStar(require("./Metadata"), exports);

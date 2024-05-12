@@ -1,6 +1,8 @@
 import { Status } from "../enums";
-import { IClientStreamReader, IRequest, IResponse, IServerStreamWriter, ITransporter, IWebSocket, RequestMetadata, ResponseMetadata } from "../interfaces";
+import { IClientStreamReader, IServerStreamWriter, IWebSocket, RequestMetadata, ResponseMetadata } from "../interfaces";
 import { CancellationToken, CancellationTokenSource } from "./CancellationToken";
+import { Request } from "./Request";
+import { Response } from "./Response";
 export declare abstract class ServerCallContext {
     constructor(id: number, method: string, cancellationTokenSource: CancellationTokenSource, requestMeta?: RequestMetadata | null, deadline?: number);
     abstract GetUserState<T>(): T;
@@ -67,7 +69,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @param {IRequest<any>} request - The request object.
      * @param {number} [deadline] - The deadline for the operation (optional).
      */
-    constructor(webSocket: IWebSocket, request: IRequest<any>, deadline?: number);
+    constructor(webSocket: IWebSocket, request: Request<any>, deadline?: number);
     GetUserState<T>(): T;
     /**
      * Returns the current instance of ServerCallContext.
@@ -86,7 +88,8 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * Receives a request and forwards it to the client stream if it exists.
      * @param {IRequest<T>} request - The request to be received.
      */
-    Receive<T>(request: IRequest<T>): void;
+    Receive<T>(request: Request<T>): void;
+    Finish(): void;
     /**
      * Creates a new instance of ClientStreamReader and returns it.
      *
@@ -120,8 +123,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @param {IResponse<T>} response - The response to be sent.
      * @return {Promise<void>} A promise that resolves when the response is sent.
      */
-    Send<T>(response: IResponse<T>): Promise<void>;
-    static transporter: ITransporter;
-    static Send<T>(response: IResponse<T>, webSocket: IWebSocket): Promise<void>;
+    Send<T>(response: Response<T>): Promise<void>;
+    static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void>;
 }
 //# sourceMappingURL=ServerCallContext.d.ts.map

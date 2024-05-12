@@ -1,6 +1,7 @@
 import { DataType, Status } from "../enums";
 import { MethodError } from "../errors/MethodError";
-import { IRequest, IResponse } from "../interfaces";
+import { Request } from "./Request";
+import { Response } from "./Response";
 import { ServerCallContext, ServerCallContextSource } from "./ServerCallContext";
 
 /**  Method types supported by u-connect. */
@@ -63,9 +64,9 @@ export abstract class Method {
     this.service = service;
   }
 
-  abstract Invoke<I>(request: IRequest<I>, context: ServerCallContext): Promise<void>;
+  abstract Invoke<I>(request: Request<I>, context: ServerCallContext): Promise<void>;
 
-  protected HandleError(error: unknown, response: IResponse<any>, context: ServerCallContext) {
+  protected HandleError(error: unknown, response: Response<any>, context: ServerCallContext) {
     if (error instanceof MethodError) {
       const { status, message } = error;
       response.error = message;
@@ -92,7 +93,7 @@ export abstract class Method {
 /**
  * A non-generic representation of a remote unary method.
  */
-export class UnaryMethod<I extends IRequest<any>, O extends IResponse<any>> extends Method {
+export class UnaryMethod<I extends Request<any>, O extends Response<any>> extends Method {
   constructor(service: Object, name: string, handler: (...args: any[]) => any) {
     super(MethodType.Unary, service, name, handler);
   }
@@ -100,13 +101,16 @@ export class UnaryMethod<I extends IRequest<any>, O extends IResponse<any>> exte
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void> {
-    const response: IResponse<O> = {
+  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+    const response: Response<O> = {
       id: request.id,
       method: request.method,
       type: DataType.UNARY_CLIENT,
     };
     try {
+      if (request.type !== DataType.UNARY_CLIENT)
+        throw new MethodError(Status.UNIMPLEMENTED, `Method ${request.method} is a unary`);
+
       response.response = (await this.Handler(request.request, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
@@ -128,13 +132,19 @@ export class ClientStreamingMethod<I, O> extends Method {
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void> {
-    const response: IResponse<O> = {
+  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+    const response: Response<O> = {
       id: request.id,
       method: request.method,
       type: DataType.STREAM_END,
     };
     try {
+      if (request.type !== DataType.STREAM_CLIENT)
+        throw new MethodError(
+          Status.UNIMPLEMENTED,
+          `Method ${request.method} is a client streaming`
+        );
+
       const requestStream = context.CreateClientStreamReader<I>();
       response.response = (await this.Handler(requestStream, context)) ?? null;
       response.status = context.Status;
@@ -157,13 +167,19 @@ export class ServerStreamingMethod<I, O> extends Method {
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void> {
-    const response: IResponse<O> = {
+  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+    const response: Response<O> = {
       id: request.id,
       method: request.method,
       type: DataType.STREAM_END,
     };
     try {
+      if (request.type !== DataType.STREAM_SERVER)
+        throw new MethodError(
+          Status.UNIMPLEMENTED,
+          `Method ${request.method} is a server streaming`
+        );
+
       const responseStream = context.CreateServerStreamWriter<O>();
       await this.Handler(request.request, responseStream, context);
       response.status = context.Status;
@@ -188,13 +204,19 @@ export class DuplexStreamingMethod<I, O> extends Method {
    *  @param request - The request object.
    */
 
-  async Invoke<I, O>(request: IRequest<I>, context: ServerCallContextSource): Promise<void> {
-    const response: IResponse<O> = {
+  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+    const response: Response<O> = {
       id: request.id,
       method: request.method,
       type: DataType.STREAM_END,
     };
     try {
+      if (request.type !== DataType.STREAM_DUPLEX)
+        throw new MethodError(
+          Status.UNIMPLEMENTED,
+          `Method ${request.method} is a duplex streaming`
+        );
+
       const requestStream = context.CreateClientStreamReader<I>();
       const responseStream = context.CreateServerStreamWriter<O>();
       await this.Handler(requestStream, responseStream, context);

@@ -1,4 +1,4 @@
-import { RecognizedString, WebSocket } from "uWebSockets.js";
+import { WebSocket } from "uWebSockets.js";
 import { ServerCallContextSource } from "../models";
 
 export interface UserData {

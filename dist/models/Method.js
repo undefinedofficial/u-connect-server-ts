@@ -72,6 +72,8 @@ class UnaryMethod extends Method {
             type: enums_1.DataType.UNARY_CLIENT,
         };
         try {
+            if (request.type !== enums_1.DataType.UNARY_CLIENT)
+                throw new MethodError_1.MethodError(enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is a unary`);
             response.response = (_a = (await this.Handler(request.request, context))) !== null && _a !== void 0 ? _a : null;
             response.status = context.Status;
         }
@@ -102,6 +104,8 @@ class ClientStreamingMethod extends Method {
             type: enums_1.DataType.STREAM_END,
         };
         try {
+            if (request.type !== enums_1.DataType.STREAM_CLIENT)
+                throw new MethodError_1.MethodError(enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is a client streaming`);
             const requestStream = context.CreateClientStreamReader();
             response.response = (_a = (await this.Handler(requestStream, context))) !== null && _a !== void 0 ? _a : null;
             response.status = context.Status;
@@ -132,6 +136,8 @@ class ServerStreamingMethod extends Method {
             type: enums_1.DataType.STREAM_END,
         };
         try {
+            if (request.type !== enums_1.DataType.STREAM_SERVER)
+                throw new MethodError_1.MethodError(enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is a server streaming`);
             const responseStream = context.CreateServerStreamWriter();
             await this.Handler(request.request, responseStream, context);
             response.status = context.Status;
@@ -163,6 +169,8 @@ class DuplexStreamingMethod extends Method {
             type: enums_1.DataType.STREAM_END,
         };
         try {
+            if (request.type !== enums_1.DataType.STREAM_DUPLEX)
+                throw new MethodError_1.MethodError(enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is a duplex streaming`);
             const requestStream = context.CreateClientStreamReader();
             const responseStream = context.CreateServerStreamWriter();
             await this.Handler(requestStream, responseStream, context);

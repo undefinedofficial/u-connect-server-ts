@@ -5,6 +5,8 @@ const uWebSockets_js_1 = require("uWebSockets.js");
 const models_1 = require("./models");
 const enums_1 = require("./enums");
 const errors_1 = require("./errors");
+const Request_1 = require("./models/Request");
+const Response_1 = require("./models/Response");
 function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect", sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, ssl, } = {}) {
     const methods = new Map();
     const app = ssl
@@ -47,118 +49,60 @@ function createUConnect({ host = "0.0.0.0", port = 3000, path = "/api/u-connect"
             ws.getUserData().islive = true;
         },
         async message(ws, message, isBinary) {
-            var _a;
+            if (!isBinary)
+                return ws.end(1005, "Message is not binary");
+            const { contexts } = ws.getUserData();
+            let request;
             try {
-                if (!isBinary)
-                    throw new errors_1.ResponseError(0, "", enums_1.Status.INVALID_ARGUMENT, "Not binary");
-                const request = models_1.ServerCallContextSource.transporter.deserialize(message);
-                if (!methods.has(request.method)) {
-                    ws.send(models_1.ServerCallContextSource.transporter.serialize({
-                        id: request.id,
-                        type: request.type,
-                        method: request.method,
-                        status: enums_1.Status.NOT_FOUND,
-                        error: "Service not found",
-                    }), true);
-                    return;
-                }
-                const { contexts } = ws.getUserData();
-                switch (request.type) {
-                    case enums_1.DataType.ABORT: {
-                        if (contexts.has(request.id)) {
-                            await contexts.get(request.id).Cancel();
-                            contexts.delete(request.id);
-                        }
-                        break;
-                    }
-                    case enums_1.DataType.UNARY_CLIENT: {
-                        if (contexts.has(request.id))
-                            break;
-                        const method = methods.get(request.method);
-                        if (method.Type !== models_1.MethodType.Unary)
-                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not unary`);
-                        const context = new models_1.ServerCallContextSource(ws, request);
-                        contexts.set(request.id, context);
-                        await method.Invoke(request, context);
-                        contexts.delete(request.id);
-                        break;
-                    }
-                    case enums_1.DataType.STREAM_CLIENT: {
-                        const method = methods.get(request.method);
-                        if (method.Type !== models_1.MethodType.ClientStreaming &&
-                            method.Type !== models_1.MethodType.DuplexStreaming) {
-                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not input streaming`);
-                        }
-                        if (!contexts.has(request.id) && method.Type === models_1.MethodType.ClientStreaming) {
-                            const context = new models_1.ServerCallContextSource(ws, request);
-                            contexts.set(request.id, context);
-                            await method.Invoke(request, context);
-                            contexts.delete(request.id);
-                        }
-                        else {
-                            contexts.get(request.id).Receive(request);
-                        }
-                        break;
-                    }
-                    case enums_1.DataType.STREAM_SERVER:
-                        {
-                            if (contexts.has(request.id))
-                                throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNAVAILABLE, `Method ${request.method} is already streaming`);
-                            const method = methods.get(request.method);
-                            if (method.Type !== models_1.MethodType.ServerStreaming &&
-                                method.Type !== models_1.MethodType.DuplexStreaming)
-                                throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not output streaming`);
-                            const context = new models_1.ServerCallContextSource(ws, request);
-                            contexts.set(request.id, context);
-                            await method.Invoke(request, context);
-                            contexts.delete(request.id);
-                        }
-                        break;
-                    case enums_1.DataType.STREAM_DUPLEX: {
-                        if (contexts.has(request.id))
-                            break;
-                        const method = methods.get(request.method);
-                        if (method.Type !== models_1.MethodType.DuplexStreaming)
-                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not duplex streaming`);
-                        const context = new models_1.ServerCallContextSource(ws, request);
-                        contexts.set(request.id, context);
-                        await method.Invoke(request, context);
-                        contexts.delete(request.id);
-                        break;
-                    }
-                    case enums_1.DataType.STREAM_END: {
-                        if (!contexts.has(request.id))
-                            break;
-                        const method = methods.get(request.method);
-                        if (method.Type !== models_1.MethodType.ClientStreaming &&
-                            method.Type !== models_1.MethodType.DuplexStreaming)
-                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not stream`);
-                        (_a = contexts.get(request.id)._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
-                        contexts.delete(request.id);
-                        break;
-                    }
-                    default:
-                        throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, "Not implemented");
-                }
+                request = Request_1.Request.Deserialize(message);
             }
             catch (error) {
+                console.warn(error);
+                return ws.end(1007, "Invalid message");
+            }
+            try {
+                if (request.type === enums_1.DataType.ABORT) {
+                    if (contexts.has(request.id)) {
+                        await contexts.get(request.id).Cancel();
+                        contexts.delete(request.id);
+                    }
+                    return;
+                }
+                if (!methods.has(request.method))
+                    throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.NOT_FOUND, "Service not found");
+                const method = methods.get(request.method);
+                if (contexts.has(request.id)) {
+                    if (request.type === enums_1.DataType.STREAM_CLIENT &&
+                        (method.Type === models_1.MethodType.ClientStreaming ||
+                            method.Type === models_1.MethodType.DuplexStreaming)) {
+                        contexts.get(request.id).Receive(request);
+                        return;
+                    }
+                    if (request.type === enums_1.DataType.STREAM_END) {
+                        if (method.Type !== models_1.MethodType.ClientStreaming &&
+                            method.Type !== models_1.MethodType.DuplexStreaming)
+                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not input stream`);
+                        contexts.get(request.id).Finish();
+                        contexts.delete(request.id);
+                        return;
+                    }
+                    throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.ALREADY_EXISTS, `Request ${request.id} in processing`);
+                }
+                const context = new models_1.ServerCallContextSource(ws, request);
+                contexts.set(request.id, context);
+                await method.Invoke(request, context);
+                contexts.delete(request.id);
+            }
+            catch (error) {
+                contexts.delete(request.id);
+                const response = new Response_1.Response(request.id, request.method, enums_1.DataType.ABORT, null, enums_1.Status.INTERNAL, null, "Internal server error");
                 if (error instanceof errors_1.ResponseError) {
-                    ws.send(models_1.ServerCallContextSource.transporter.serialize({
-                        id: error.id,
-                        type: enums_1.DataType.ABORT,
-                        method: error.method,
-                        status: error.status,
-                        error: error.message,
-                    }), true);
+                    response.status = error.status;
+                    response.error = error.message;
+                    ws.send(Response_1.Response.Serialize(response), true);
                 }
                 else {
-                    ws.send(models_1.ServerCallContextSource.transporter.serialize({
-                        id: 0,
-                        type: enums_1.DataType.ABORT,
-                        method: "",
-                        status: enums_1.Status.INTERNAL,
-                        error: "Internal server error",
-                    }), true);
+                    ws.send(Response_1.Response.Serialize(response), true);
                     throw error;
                 }
             }

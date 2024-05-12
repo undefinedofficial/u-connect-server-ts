@@ -1,17 +1,14 @@
-import { RecognizedString } from "uWebSockets.js";
-import { DataType, Status, TransportOptions } from "../enums";
+import { DataType, Status } from "../enums";
 import {
   IClientStreamReader,
-  IRequest,
-  IResponse,
   IServerStreamWriter,
-  ITransporter,
   IWebSocket,
   RequestMetadata,
   ResponseMetadata,
 } from "../interfaces";
 import { CancellationToken, CancellationTokenSource } from "./CancellationToken";
-import { MessagePackTransporter } from "../middleware/MessagePackTransporter";
+import { Request } from "./Request";
+import { Response } from "./Response";
 
 export abstract class ServerCallContext {
   constructor(
@@ -150,7 +147,7 @@ export class ServerCallContextSource extends ServerCallContext {
    * @param {IRequest<any>} request - The request object.
    * @param {number} [deadline] - The deadline for the operation (optional).
    */
-  constructor(webSocket: IWebSocket, request: IRequest<any>, deadline?: number) {
+  constructor(webSocket: IWebSocket, request: Request<any>, deadline?: number) {
     const cancellationTokenSource = new CancellationTokenSource(deadline);
     super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
     this._cancellationTokenCore = cancellationTokenSource;
@@ -188,9 +185,13 @@ export class ServerCallContextSource extends ServerCallContext {
    * Receives a request and forwards it to the client stream if it exists.
    * @param {IRequest<T>} request - The request to be received.
    */
-  Receive<T>(request: IRequest<T>) {
+  Receive<T>(request: Request<T>) {
     this._clientStreamCore?.Receive(request.request);
   }
+  Finish() {
+    this._clientStreamCore?.Finish();
+  }
+
   /**
    * Creates a new instance of ClientStreamReader and returns it.
    *
@@ -242,7 +243,7 @@ export class ServerCallContextSource extends ServerCallContext {
    * @param {IResponse<T>} response - The response to be sent.
    * @return {Promise<void>} A promise that resolves when the response is sent.
    */
-  Send<T>(response: IResponse<T>): Promise<void> {
+  Send<T>(response: Response<T>): Promise<void> {
     if (this._cancellationTokenCore.IsCancellationRequested) {
       console.log(`Cancelling call ${response.method} with id ${response.id}`);
       return Promise.resolve();
@@ -250,13 +251,11 @@ export class ServerCallContextSource extends ServerCallContext {
     return ServerCallContextSource.Send(response, this._webSocketCore);
   }
 
-  public static transporter: ITransporter = MessagePackTransporter;
-
-  public static Send<T>(response: IResponse<T>, webSocket: IWebSocket): Promise<void> {
+  public static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void> {
     return new Promise((resolve, reject) => {
       if (webSocket.getUserData().islive == false) return reject("Connection is not live");
 
-      webSocket.send(ServerCallContextSource.transporter.serialize(response), true);
+      webSocket.send(Response.Serialize(response), true);
       resolve();
     });
   }
