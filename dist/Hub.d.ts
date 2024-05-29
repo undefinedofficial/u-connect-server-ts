@@ -1,18 +1,8 @@
-import { HttpRequest, HttpResponse, TemplatedApp } from "uWebSockets.js";
+import { HttpRequest, HttpResponse } from "uWebSockets.js";
 import { Method } from "./models";
 import { IWebSocket } from "./interfaces";
 interface IServiceConstructor {
     new (...args: any[]): any;
-}
-export interface UConnectOptions {
-    /**
-     *  SSL options
-     */
-    ssl?: {
-        key: string;
-        cert: string;
-        passphrase?: string;
-    };
 }
 export interface UConnectHubOptions {
     /**
@@ -60,23 +50,11 @@ export declare class UConnectHub {
     AddService<TService extends IServiceConstructor>(service: TService, name?: string): this;
     RemoveService(name: string): this;
 }
-export interface UConnectRunOptions {
-    /**
-     *  Host to listen on. Defaults to 0.0.0.0.
-     */
-    host?: string;
-    /**
-     *  Port to listen on. Defaults to 3000.
-     */
-    port?: number;
-}
-export declare class UConnectServer {
-    private isRunning;
-    readonly isSSL: boolean;
-    readonly app: TemplatedApp;
-    constructor({ ssl }?: UConnectOptions);
-    CreateHub({ path, sendPingsAutomatically, compression, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }: UConnectHubOptions): UConnectHub;
-    Run({ host, port }?: UConnectRunOptions): void;
+export declare class UConnectHubSource extends UConnectHub {
+    HasService(name: string): boolean;
+    GetService(name: string): IServiceConstructor | undefined;
+    HasMethod(name: string): boolean;
+    GetMethod(name: string): Method | undefined;
 }
 export {};
-//# sourceMappingURL=server.d.ts.map
+//# sourceMappingURL=Hub.d.ts.map

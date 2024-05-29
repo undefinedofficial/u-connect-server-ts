@@ -1,5 +1,4 @@
 import {
-  createUConnect,
   ServerCallContext,
   IClientStreamReader,
   IServerStreamWriter,
@@ -9,6 +8,7 @@ import {
   DuplexStreamMethod,
   Status,
   MethodError,
+  UConnectServer,
 } from "./src";
 
 const generate = (max: number, min: number = 0) => Math.floor(Math.random() * (max - min) + min);
@@ -109,13 +109,19 @@ class HelloService {
   }
 }
 
-const app = createUConnect({
-  host: "127.0.0.1",
-  port: 3000,
+// Create the server instance.
+const app = new UConnectServer({});
+
+// Create the hub instance for connecting to and interacting with it.
+const hub = app.CreateHub({
   path: "/api/ws",
 });
 
-app.AddService(HelloService);
-app.AddService(HelloService, "Hello");
+// Add the service with default name "HelloService".
+hub.AddService(HelloService);
 
-app.Run();
+// Add the service with name "Hello".
+hub.AddService(HelloService, "Hello");
+
+// Run the server. After this call a prohibited creating new the hubs, the server will be ready to accept connections.
+app.Run({ host: "127.0.0.1", port: 3000 });

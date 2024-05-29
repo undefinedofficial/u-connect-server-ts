@@ -14,7 +14,7 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.createUConnect = exports.MethodError = exports.Status = exports.CancellationToken = exports.ServerCallContext = void 0;
+exports.UConnectServer = exports.UConnectHub = exports.MethodError = exports.Status = exports.CancellationToken = exports.ServerCallContext = void 0;
 __exportStar(require("./decorators"), exports);
 var models_1 = require("./models");
 Object.defineProperty(exports, "ServerCallContext", { enumerable: true, get: function () { return models_1.ServerCallContext; } });
@@ -23,5 +23,7 @@ var enums_1 = require("./enums");
 Object.defineProperty(exports, "Status", { enumerable: true, get: function () { return enums_1.Status; } });
 var errors_1 = require("./errors");
 Object.defineProperty(exports, "MethodError", { enumerable: true, get: function () { return errors_1.MethodError; } });
-var server_1 = require("./server");
-Object.defineProperty(exports, "createUConnect", { enumerable: true, get: function () { return server_1.createUConnect; } });
+var Hub_1 = require("./Hub");
+Object.defineProperty(exports, "UConnectHub", { enumerable: true, get: function () { return Hub_1.UConnectHub; } });
+var Server_1 = require("./Server");
+Object.defineProperty(exports, "UConnectServer", { enumerable: true, get: function () { return Server_1.UConnectServer; } });

@@ -1,56 +1,13 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UConnectServer = exports.UConnectHub = void 0;
+exports.UConnectServer = void 0;
 const uWebSockets_js_1 = require("uWebSockets.js");
 const models_1 = require("./models");
 const enums_1 = require("./enums");
 const errors_1 = require("./errors");
 const Request_1 = require("./models/Request");
 const Response_1 = require("./models/Response");
-class UConnectHub {
-    constructor() {
-        this.services = new Map();
-        this.methods = new Map();
-    }
-    AddService(service, name) {
-        if (this.methods.has(name || service.name))
-            throw new Error(`Service ${name || service.name} already exists`);
-        const localMethods = service.prototype.Methods;
-        if (!localMethods)
-            throw new Error(`Service ${name || service.name} has no Methods`);
-        for (const [method, descriptor] of localMethods)
-            this.methods.set(models_1.Method.FullName(name || service.name, method), descriptor);
-        this.services.set(name || service.name, service);
-        return this;
-    }
-    RemoveService(name) {
-        if (!this.methods.has(name))
-            throw new Error(`Service ${name} doesn't exist`);
-        const service = this.services.get(name);
-        const localMethods = service.prototype.Methods;
-        if (!localMethods)
-            throw new Error(`Service ${name} has no Methods`);
-        for (const [method, _] of localMethods)
-            this.methods.delete(models_1.Method.FullName(name, method));
-        this.services.delete(name);
-        return this;
-    }
-}
-exports.UConnectHub = UConnectHub;
-class UConnectHubSource extends UConnectHub {
-    HasService(name) {
-        return this.services.has(name);
-    }
-    GetService(name) {
-        return this.services.get(name);
-    }
-    HasMethod(name) {
-        return this.methods.has(name);
-    }
-    GetMethod(name) {
-        return this.methods.get(name);
-    }
-}
+const Hub_1 = require("./Hub");
 class UConnectServer {
     constructor({ ssl } = {}) {
         this.isRunning = false;
@@ -62,7 +19,7 @@ class UConnectServer {
     CreateHub({ path, sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }) {
         if (this.isRunning)
             throw new Error("Can't create hub when Server is already running");
-        const hub = new UConnectHubSource();
+        const hub = new Hub_1.UConnectHubSource();
         this.app.ws(path, {
             compression: compression ? uWebSockets_js_1.SHARED_COMPRESSOR : uWebSockets_js_1.DISABLED,
             idleTimeout,
