@@ -10,6 +10,11 @@
   "type": "commonjs",
   "private": true,
   "license": "MIT",
+  "author": "https://github.com/undefinedofficial",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/undefinedofficial/u-connect-server-ts.git"
+  },
   "scripts": {
     "dev": "ts-node-dev --respawn --watch --transpile-only app.ts",
     "build": "tsc"

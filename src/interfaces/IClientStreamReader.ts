@@ -1,3 +1,11 @@
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
+
 ﻿/**
  * A stream of messages to be read.
  * Messages can be awaited await reader.MoveNext(), that returns true
