@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ServerCallContextSource = exports.ServerStreamWriter = exports.ClientStreamReader = exports.ServerCallContext = void 0;
 const enums_1 = require("../enums");

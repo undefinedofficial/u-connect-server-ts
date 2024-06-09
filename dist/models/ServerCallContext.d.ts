@@ -1,3 +1,10 @@
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
 import { Status } from "../enums";
 import { IClientStreamReader, IServerStreamWriter, IWebSocket, RequestMetadata, ResponseMetadata } from "../interfaces";
 import { CancellationToken, CancellationTokenSource } from "./CancellationToken";

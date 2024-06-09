@@ -1,4 +1,11 @@
 "use strict";
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
 var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
     if (k2 === undefined) k2 = k;
     var desc = Object.getOwnPropertyDescriptor(m, k);
