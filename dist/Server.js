@@ -23,6 +23,9 @@ class UConnectServer {
             ? (0, uWebSockets_js_1.SSLApp)({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
             : (0, uWebSockets_js_1.App)();
     }
+    /**
+     * Creates a new hub endpoint. The hub is an instance for connecting to and interacting with it.
+     */
     CreateHub({ path, sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }) {
         if (this.isRunning)
             throw new Error("Can't create hub when Server is already running");
@@ -114,11 +117,15 @@ class UConnectServer {
                     if (error instanceof errors_1.ResponseError) {
                         response.status = error.status;
                         response.error = error.message;
-                        ws.send(Response_1.Response.Serialize(response), true);
+                        // unknown origin bug, fix after throws exception `connection closed` in this line.
+                        if (ws.getUserData().islive)
+                            ws.send(Response_1.Response.Serialize(response), true);
                         console.error(error);
                     }
                     else {
-                        ws.send(Response_1.Response.Serialize(response), true);
+                        // unknown origin bug, fix after throws exception `connection closed` in this line.
+                        if (ws.getUserData().islive)
+                            ws.send(Response_1.Response.Serialize(response), true);
                         throw error;
                     }
                 }

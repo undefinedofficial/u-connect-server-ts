@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-﻿export const enum Status {
+export const enum Status {
   /**
    * The operation completed successfully.
    */

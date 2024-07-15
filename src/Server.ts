@@ -49,6 +49,9 @@ export class UConnectServer {
       : App();
   }
 
+  /**
+   * Creates a new hub endpoint. The hub is an instance for connecting to and interacting with it.
+   */
   CreateHub({
     path,
     sendPingsAutomatically = true,
@@ -191,11 +194,14 @@ export class UConnectServer {
           if (error instanceof ResponseError) {
             response.status = error.status;
             response.error = error.message;
-            ws.send(Response.Serialize(response), true);
+
+            // unknown origin bug, fix after throws exception `connection closed` in this line.
+            if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
 
             console.error(error);
           } else {
-            ws.send(Response.Serialize(response), true);
+            // unknown origin bug, fix after throws exception `connection closed` in this line.
+            if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
             throw error;
           }
         }

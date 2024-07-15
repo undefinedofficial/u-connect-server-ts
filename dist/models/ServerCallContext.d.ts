@@ -23,6 +23,7 @@ export declare abstract class ServerCallContext {
     readonly Method: string;
     /**
      * Deadline for this task. The call will be automatically cancelled once the deadline is exceeded.
+     * @deprecated not implemented
      */
     readonly Deadline?: number;
     /**

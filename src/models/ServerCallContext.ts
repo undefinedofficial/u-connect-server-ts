@@ -47,6 +47,7 @@ export abstract class ServerCallContext {
 
   /**
    * Deadline for this task. The call will be automatically cancelled once the deadline is exceeded.
+   * @deprecated not implemented
    */
   public readonly Deadline?: number;
 
