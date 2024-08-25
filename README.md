@@ -34,7 +34,7 @@ const app = new UConnectServer({
   // ssl: {
   //     cert: "path to cert file",
   //     key: "path to key file",
-  //     passphrase: "path to cert",
+  //     passphrase: "password to cert",
   // }
 });
 ```
@@ -95,7 +95,7 @@ class HelloService {
 4. RequestMeta - Карта ключ-значение только для чтения, хранит данные переданные от клиента альтернатива заголовками HTTP.
 5. CancellationToken - Интерфейс закрытия запроса через него можно узнать жив ли запрос и подписаться на закрытие запроса.
 6. ResponseMeta - Карта ключ-значение ответ клиенту альтернатива заголовками HTTP.
-7. Status - Статус код запроса по умолчанию Status.OK можете изменить при необходимости
+7. Status - Статус код запроса по умолчанию Status.OK можете изменить при необходимости.
 8. Kill - Закрыть все что связанно с подлючением и отключить его
 9. GetUserState - Получить глобальное состояние клиента настроенное перед подключением.
 
@@ -152,7 +152,7 @@ class HelloService {
 
 ```ts
 const enum Status {
-  OK, // Запрос прошел успешно.
+  OK, // Запрос прошел успешно (по умолчанию).
   CANCELLED, // Запрос отменен клиентом
   UNKNOWN, // Неизвестная ошибка.
   INVALID_ARGUMENT, // Клиент указал недопустимый аргумент.
@@ -166,28 +166,90 @@ const enum Status {
   OUT_OF_RANGE, // Операция отменена из-за выхода за допустимые пределы (например запрос извлечения из бд за её пределами)
   UNIMPLEMENTED, // Не реальзованно или не поддерживается.
   INTERNAL, // Внутренняя ошибка сервера.
-
-  /**
-   * The service is currently unavailable.  This is a most likely a
-   * transient condition and may be corrected by retrying with
-   * a backoff.
-   *
-   * See the guidelines above for deciding between FAILED_PRECONDITION,
-   * ABORTED, and UNAVAILABLE.
-   */
-  UNAVAILABLE,
-
-  /**
-   * The operation was attempted past the valid range.  E.g., seeking or
-   * reading past end-of-file.
-   * Unlike INVALID_ARGUMENT, this error indicates a problem that may
-   * be fixed if the system state changes. For example, a 32-bit file
-   * system will generate INVALID_ARGUMENT if asked to read at an
-   * offset that is not in the range [0,2^32-1], but it will generate
-   * OUT_OF_RANGE if asked to read from an offset past the current
-   * file size.
-   */
-  DATA_LOSS,
+  UNAVAILABLE, // На данный момент операция не доступна, следует повторить попытку позже.
+  DATA_LOSS, // Попытка выйти за границы диапазона (например попытка получить данные после конца).
   UNAUTHENTICATED, // Операция требует авторизации.
+}
+```
+
+Установить статус можно и без ошибки
+
+```ts
+class HelloService {
+  @UnaryMethod()
+  public async SayHello(name: string, context: ServerCallContext): string {
+    context.Status = Status.UNIMPLEMENTED;
+    return name;
+  }
+}
+```
+
+### Стриминг с сервера - ServerStreamMethod
+
+Для стриминга с сервера у нас есть интерфейс вывода, который мы вызываем каждый раз когда собираемся что-то отправить.
+
+Пример бесконечного стриминга пока клиент держит соединение открытым:
+
+```ts
+class HelloService {
+  @ServerStreamMethod()
+  public async SayHelloServerStream(
+    request: string,
+    responseStream: IServerStreamWriter<string>,
+    context: ServerCallContext
+  ) {
+    return new Promise((resolve, reject) => {
+      let i = 0;
+      const interval = setInterval(() => responseStream.Write(`Hello №${++i}`), 1000);
+      context.CancellationToken.Register(() => {
+        resolve();
+        clearInterval(interval);
+      });
+    });
+  }
+}
+```
+
+### Стриминг с клиента - ClientStreamMethod
+
+Для стриминга с клиента у нас есть интерфейс ввода, который мы вызываем каждый раз когда готовы что-то получить.
+
+Вызывая IClientStreamReader.MoveNext мы дожидаемся нового сообщения, результат true значит что сообщение полученно и находится в IClientStreamReader.Current, иначе мы должны вернуть результат выполнения обратно клиенту.
+
+```ts
+class HelloService {
+  @ClientStreamMethod()
+  public async SayHelloClientStream(
+    requestStream: IClientStreamReader<string>,
+    context: ServerCallContext
+  ) {
+    while (await requestStream.MoveNext()) {
+      console.log("New message", requestStream.Current);
+    }
+    return "Thank's";
+  }
+}
+```
+
+### Двойной стриминг DuplexStreamMethod
+
+Двойной стриминг включается в себя оба варианта ServerStreamMethod и ClientStreamMethod, при этом они могут использоваться независимо.
+
+```ts
+class HelloService {
+  @DuplexStreamMethod()
+  public async SayHelloDuplexStream(
+    requestStream: IClientStreamReader<string>,
+    responseStream: IServerStreamWriter<string>,
+    context: ServerCallContext
+  ) {
+    await responseStream.Write("Hi!");
+
+    // получаем
+    while (await requestStream.MoveNext()) {
+      // отправляем обратно
+      await responseStream.Write(requestStream.Current);
+    }
+  }
 }
 ```
