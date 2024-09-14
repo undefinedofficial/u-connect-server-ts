@@ -5,6 +5,7 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
+// @ts-nocheck
 
 import {
   type IClientStreamReader,

@@ -1,1 +1,0 @@
-{"version":3,"file":"Action.d.ts","sourceRoot":"","sources":["../../../src/interfaces/Action.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEH,MAAM,MAAM,2BAA2B,CAAC,CAAC,IAAI,WAAW,CAAC,CAAC,CAAC,CAAC;AAC5D,MAAM,MAAM,uBAAuB,GAAG,WAAW,CAAC,IAAI,CAAC,CAAC;AACxD,MAAM,MAAM,oBAAoB,CAAC,CAAC,IAAI,CAAC,CAAC;AACxC,MAAM,MAAM,gBAAgB,GAAG,IAAI,GAAG,GAAG,CAAC"}

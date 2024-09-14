@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -5,7 +6,9 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-export var Status;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Status = void 0;
+var Status;
 (function (Status) {
     /**
      * The operation completed successfully.
@@ -134,7 +137,7 @@ export var Status;
      * with the server.
      */
     Status[Status["UNAUTHENTICATED"] = 16] = "UNAUTHENTICATED";
-})(Status || (Status = {}));
+})(Status || (exports.Status = Status = {}));
 /**
     Client Application cancelled the request	CANCELLED	Both
     Deadline expires before server returns status	DEADLINE_EXCEEDED	Both

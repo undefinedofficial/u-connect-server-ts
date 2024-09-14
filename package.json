@@ -1,13 +1,13 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "2.0.2",
+  "version": "2.0.3",
   "files": [
     "dist/**"
   ],
   "main": "dist/index.js",
   "module": "dist/index.js",
   "types": "dist/index.d.ts",
-  "type": "module",
+  "type": "commonjs",
   "private": true,
   "license": "MIT",
   "author": "https://github.com/undefinedofficial",
@@ -16,7 +16,7 @@
     "url": "https://github.com/undefinedofficial/u-connect-server-ts.git"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn --watch --transpile-only app.ts",
+    "dev": "ts-node-dev --respawn --watch --transpile-only example/app.ts",
     "build": "tsc"
   },
   "devDependencies": {

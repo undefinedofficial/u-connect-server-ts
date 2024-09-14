@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -5,15 +6,10 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-import { encode } from "@msgpack/msgpack";
-export class Response {
-    id;
-    method;
-    type;
-    response;
-    status;
-    meta;
-    error;
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.Response = void 0;
+const msgpack_1 = require("@msgpack/msgpack");
+class Response {
     /**
      *
      */
@@ -27,14 +23,15 @@ export class Response {
         this.error = error;
     }
     static Serialize({ id, method, type, response, status, meta, error, }) {
-        return encode([
+        return (0, msgpack_1.encode)([
             id,
             method,
             type,
-            response ?? null,
-            status ?? null,
-            meta ?? null,
-            error ?? null,
+            response !== null && response !== void 0 ? response : null,
+            status !== null && status !== void 0 ? status : null,
+            meta !== null && meta !== void 0 ? meta : null,
+            error !== null && error !== void 0 ? error : null,
         ]);
     }
 }
+exports.Response = Response;

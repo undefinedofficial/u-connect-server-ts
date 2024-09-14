@@ -16,10 +16,6 @@ export interface UConnectOptions {
         cert: string;
         passphrase?: string;
     };
-    /**
-     *  Number of threads to use (default is number of cores)
-     */
-    threads?: number;
 }
 export interface UConnectRunOptions {
     /**
@@ -35,8 +31,7 @@ export declare class UConnectServer {
     private isRunning;
     readonly isSSL: boolean;
     readonly app: TemplatedApp;
-    private readonly workers?;
-    constructor({ ssl, threads }?: UConnectOptions);
+    constructor({ ssl }?: UConnectOptions);
     /**
      * Creates a new hub endpoint. The hub is an instance for connecting to and interacting with it.
      */

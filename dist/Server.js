@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -5,35 +6,31 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-import { App, DISABLED, SHARED_COMPRESSOR, SSLApp } from "uWebSockets.js";
-import { MethodType, ServerCallContextSource } from "./models";
-import { DataType, Status } from "./enums";
-import { ResponseError } from "./errors";
-import { Request } from "./models/Request";
-import { Response } from "./models/Response";
-import { UConnectHubSource } from "./Hub";
-import { Worker } from "worker_threads";
-import os from "os";
-export class UConnectServer {
-    isRunning;
-    isSSL;
-    app;
-    workers;
-    constructor({ ssl, threads = os.cpus().length } = {}) {
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.UConnectServer = void 0;
+const uWebSockets_js_1 = require("uWebSockets.js");
+const models_1 = require("./models");
+const enums_1 = require("./enums");
+const errors_1 = require("./errors");
+const Request_1 = require("./models/Request");
+const Response_1 = require("./models/Response");
+const Hub_1 = require("./Hub");
+class UConnectServer {
+    constructor({ ssl } = {}) {
         this.isRunning = false;
         this.isSSL = ssl ? true : false;
         this.app = ssl
-            ? SSLApp({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
-            : App();
-        /* Main thread loops over all CPUs */
-        /* In this case we only spawn two (hardcoded) */
-        if (threads > 1) {
-            /* Spawn a new thread running  */
-            this.workers = new Array(threads - 1).map(() => new Worker("", { workerData: {} }).on("message", (workerAppDescriptor) => {
-                // @ts-ignore
-                this.app.addChildAppDescriptor(workerAppDescriptor);
-            }));
-        }
+            ? (0, uWebSockets_js_1.SSLApp)({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
+            : (0, uWebSockets_js_1.App)();
     }
     /**
      * Creates a new hub endpoint. The hub is an instance for connecting to and interacting with it.
@@ -41,9 +38,9 @@ export class UConnectServer {
     CreateHub({ path, sendPingsAutomatically = true, compression = false, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }) {
         if (this.isRunning)
             throw new Error("Can't create hub when Server is already running");
-        const hub = new UConnectHubSource();
+        const hub = new Hub_1.UConnectHubSource();
         this.app.ws(path, {
-            compression: compression ? SHARED_COMPRESSOR : DISABLED,
+            compression: compression ? uWebSockets_js_1.SHARED_COMPRESSOR : uWebSockets_js_1.DISABLED,
             idleTimeout,
             maxBackpressure,
             sendPingsAutomatically,
@@ -70,86 +67,87 @@ export class UConnectServer {
                         return;
                     }
                 }
-                res.upgrade({
-                    contexts: new Map(),
-                    ...userData,
-                }, SecWebSocketKey, SecWebSocketProtocol, SecWebSocketVersion, context);
+                res.upgrade(Object.assign({ contexts: new Map() }, userData), SecWebSocketKey, SecWebSocketProtocol, SecWebSocketVersion, context);
             },
             open(ws) {
                 ws.getUserData().islive = true;
             },
-            async message(ws, message, isBinary) {
-                if (!isBinary)
-                    return ws.end(1005, "Message is not binary");
-                const { contexts } = ws.getUserData();
-                let request;
-                try {
-                    request = Request.Deserialize(message);
-                }
-                catch (error) {
-                    console.warn(error);
-                    return ws.end(1007, "Invalid message");
-                }
-                try {
-                    if (request.type === DataType.ABORT) {
+            message(ws, message, isBinary) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    if (!isBinary)
+                        return ws.end(1005, "Message is not binary");
+                    const { contexts } = ws.getUserData();
+                    let request;
+                    try {
+                        request = Request_1.Request.Deserialize(message);
+                    }
+                    catch (error) {
+                        console.warn(error);
+                        return ws.end(1007, "Invalid message");
+                    }
+                    try {
+                        if (request.type === enums_1.DataType.ABORT) {
+                            if (contexts.has(request.id)) {
+                                yield contexts.get(request.id).Cancel();
+                                contexts.delete(request.id);
+                            }
+                            return;
+                        }
+                        const method = hub.GetMethod(request.method);
+                        if (!method)
+                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.NOT_FOUND, "Service not found");
                         if (contexts.has(request.id)) {
-                            await contexts.get(request.id).Cancel();
-                            contexts.delete(request.id);
+                            if (request.type === enums_1.DataType.STREAM_CLIENT &&
+                                (method.Type === models_1.MethodType.ClientStreaming ||
+                                    method.Type === models_1.MethodType.DuplexStreaming)) {
+                                contexts.get(request.id).Receive(request);
+                                return;
+                            }
+                            if (request.type === enums_1.DataType.STREAM_END) {
+                                if (method.Type !== models_1.MethodType.ClientStreaming &&
+                                    method.Type !== models_1.MethodType.DuplexStreaming)
+                                    throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is not input stream`);
+                                contexts.get(request.id).Finish();
+                                contexts.delete(request.id);
+                                return;
+                            }
+                            throw new errors_1.ResponseError(request.id, request.method, enums_1.Status.ALREADY_EXISTS, `Request ${request.id} in processing`);
                         }
-                        return;
+                        const context = new models_1.ServerCallContextSource(ws, request);
+                        contexts.set(request.id, context);
+                        yield method.Invoke(request, context);
+                        contexts.delete(request.id);
                     }
-                    const method = hub.GetMethod(request.method);
-                    if (!method)
-                        throw new ResponseError(request.id, request.method, Status.NOT_FOUND, "Service not found");
-                    if (contexts.has(request.id)) {
-                        if (request.type === DataType.STREAM_CLIENT &&
-                            (method.Type === MethodType.ClientStreaming ||
-                                method.Type === MethodType.DuplexStreaming)) {
-                            contexts.get(request.id).Receive(request);
-                            return;
+                    catch (error) {
+                        contexts.delete(request.id);
+                        const response = new Response_1.Response(request.id, request.method, enums_1.DataType.ABORT, null, enums_1.Status.INTERNAL, null, "Internal server error");
+                        if (error instanceof errors_1.ResponseError) {
+                            response.status = error.status;
+                            response.error = error.message;
+                            // unknown origin bug, fix after throws exception `connection closed` in this line.
+                            if (ws.getUserData().islive)
+                                ws.send(Response_1.Response.Serialize(response), true);
+                            console.error(error);
                         }
-                        if (request.type === DataType.STREAM_END) {
-                            if (method.Type !== MethodType.ClientStreaming &&
-                                method.Type !== MethodType.DuplexStreaming)
-                                throw new ResponseError(request.id, request.method, Status.UNIMPLEMENTED, `Method ${request.method} is not input stream`);
-                            contexts.get(request.id).Finish();
-                            contexts.delete(request.id);
-                            return;
+                        else {
+                            // unknown origin bug, fix after throws exception `connection closed` in this line.
+                            if (ws.getUserData().islive)
+                                ws.send(Response_1.Response.Serialize(response), true);
+                            throw error;
                         }
-                        throw new ResponseError(request.id, request.method, Status.ALREADY_EXISTS, `Request ${request.id} in processing`);
                     }
-                    const context = new ServerCallContextSource(ws, request);
-                    contexts.set(request.id, context);
-                    await method.Invoke(request, context);
-                    contexts.delete(request.id);
-                }
-                catch (error) {
-                    contexts.delete(request.id);
-                    const response = new Response(request.id, request.method, DataType.ABORT, null, Status.INTERNAL, null, "Internal server error");
-                    if (error instanceof ResponseError) {
-                        response.status = error.status;
-                        response.error = error.message;
-                        // unknown origin bug, fix after throws exception `connection closed` in this line.
-                        if (ws.getUserData().islive)
-                            ws.send(Response.Serialize(response), true);
-                        console.error(error);
-                    }
-                    else {
-                        // unknown origin bug, fix after throws exception `connection closed` in this line.
-                        if (ws.getUserData().islive)
-                            ws.send(Response.Serialize(response), true);
-                        throw error;
-                    }
-                }
+                });
             },
-            async close(ws, code, message) {
-                console.log("Connection close", code, Buffer.from(message).toString("ascii"));
-                const userData = ws.getUserData();
-                userData.islive = false;
-                for (const context of userData.contexts.values())
-                    await context.Cancel();
-                userData.contexts.clear();
-                onClose?.(ws, code, Buffer.from(message).toString("ascii"));
+            close(ws, code, message) {
+                return __awaiter(this, void 0, void 0, function* () {
+                    console.log("Connection close", code, Buffer.from(message).toString("ascii"));
+                    const userData = ws.getUserData();
+                    userData.islive = false;
+                    for (const context of userData.contexts.values())
+                        yield context.Cancel();
+                    userData.contexts.clear();
+                    onClose === null || onClose === void 0 ? void 0 : onClose(ws, code, Buffer.from(message).toString("ascii"));
+                });
             },
         });
         return hub;
@@ -160,14 +158,7 @@ export class UConnectServer {
         this.app.listen(host, port, (listenSocket) => {
             const protocol = this.isSSL ? "wss" : "ws";
             if (listenSocket) {
-                console.log(`Listening on ${protocol}://${host}:${port} ` +
-                    ((this.workers?.length ?? 0 > 1) ? `on ${this.workers.length} threads` : ""));
-                if (this.workers) {
-                    for (const worker of this.workers) {
-                        worker.postMessage({ shutdown: true });
-                        worker.terminate();
-                    }
-                }
+                console.log(`Listening on ${protocol}://${host}:${port}`);
                 this.isRunning = true;
             }
             else {
@@ -176,3 +167,4 @@ export class UConnectServer {
         });
     }
 }
+exports.UConnectServer = UConnectServer;

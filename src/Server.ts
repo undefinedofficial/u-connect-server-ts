@@ -14,7 +14,6 @@ import { ResponseError } from "./errors";
 import { Request } from "./models/Request";
 import { Response } from "./models/Response";
 import { UConnectHub, UConnectHubOptions, UConnectHubSource } from "./Hub";
-import os from "os";
 
 export interface UConnectOptions {
   /**

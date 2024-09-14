@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -5,56 +6,36 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-import { DataType, Status } from "../enums";
-import { CancellationTokenSource } from "./CancellationToken";
-import { Response } from "./Response";
-export class ServerCallContext {
+var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
+    function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
+    return new (P || (P = Promise))(function (resolve, reject) {
+        function fulfilled(value) { try { step(generator.next(value)); } catch (e) { reject(e); } }
+        function rejected(value) { try { step(generator["throw"](value)); } catch (e) { reject(e); } }
+        function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+    });
+};
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.ServerCallContextSource = exports.ServerStreamWriter = exports.ClientStreamReader = exports.ServerCallContext = void 0;
+const enums_1 = require("../enums");
+const CancellationToken_1 = require("./CancellationToken");
+const Response_1 = require("./Response");
+class ServerCallContext {
     constructor(id, method, cancellationTokenSource, requestMeta, deadline) {
         this.Id = id;
         this.Method = method;
         this.Deadline = deadline;
         this.RequestMeta = requestMeta;
         this.CancellationToken = cancellationTokenSource.Token;
-        this.Status = Status.OK;
+        this.Status = enums_1.Status.OK;
     }
-    /**
-     * Unique for the socket identifier of this task.
-     */
-    Id;
-    /**
-     * Full name of method called in this task.
-     */
-    Method;
-    /**
-     * Deadline for this task. The call will be automatically cancelled once the deadline is exceeded.
-     * @deprecated not implemented
-     */
-    Deadline;
-    /**
-     * Initial metadata sent by client.
-     */
-    RequestMeta;
-    /**
-     * Cancellation token signals when call is cancelled. It is also triggered when the deadline is exceeded or there was some other error (e.g. network problem).
-     */
-    CancellationToken;
-    /**
-     * Trailers to send back to client after finishes.
-     */
-    ResponseMeta;
-    /**
-     * Status to send back to client after finishes.
-     */
-    Status;
 }
-export class ClientStreamReader {
-    _context;
-    _buffer = [];
-    _current;
-    _finished = false;
-    _resolve;
+exports.ServerCallContext = ServerCallContext;
+class ClientStreamReader {
     constructor(_context) {
         this._context = _context;
+        this._buffer = [];
+        this._finished = false;
     }
     Continue() {
         /**
@@ -63,7 +44,7 @@ export class ClientStreamReader {
         this._context.Send({
             id: this._context.Id,
             method: this._context.Method,
-            type: DataType.STREAM_CLIENT,
+            type: enums_1.DataType.STREAM_CLIENT,
         });
     }
     get Current() {
@@ -88,16 +69,18 @@ export class ClientStreamReader {
      * Accept message and push to queue for processing.
      */
     Receive(message) {
+        var _a;
         this._buffer.push(message);
-        this._resolve?.();
+        (_a = this._resolve) === null || _a === void 0 ? void 0 : _a.call(this);
     }
     Finish() {
+        var _a;
         this._finished = true;
-        this._resolve?.();
+        (_a = this._resolve) === null || _a === void 0 ? void 0 : _a.call(this);
     }
 }
-export class ServerStreamWriter {
-    _context;
+exports.ClientStreamReader = ClientStreamReader;
+class ServerStreamWriter {
     constructor(_context) {
         this._context = _context;
     }
@@ -105,13 +88,13 @@ export class ServerStreamWriter {
         return this._context.Send({
             id: this._context.Id,
             method: this._context.Method,
-            type: DataType.STREAM_SERVER,
+            type: enums_1.DataType.STREAM_SERVER,
             response: message,
         });
     }
 }
-export class ServerCallContextSource extends ServerCallContext {
-    isCancellationRequested = false;
+exports.ServerStreamWriter = ServerStreamWriter;
+class ServerCallContextSource extends ServerCallContext {
     /**
      * Creates a new instance of ServerCallContext on every request for controlling current call.
      *
@@ -120,8 +103,13 @@ export class ServerCallContextSource extends ServerCallContext {
      * @param {number} [deadline] - The deadline for the operation (optional).
      */
     constructor(webSocket, request, deadline) {
-        const cancellationTokenSource = new CancellationTokenSource(deadline);
+        const cancellationTokenSource = new CancellationToken_1.CancellationTokenSource(deadline);
         super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
+        this.isCancellationRequested = false;
+        /**
+         * CancellationTokenSource for controlling current call cancellation.
+         */
+        this._cancellationTokenCore = new CancellationToken_1.CancellationTokenSource();
         this._cancellationTokenCore = cancellationTokenSource;
         this._webSocketCore = webSocket;
     }
@@ -141,22 +129,26 @@ export class ServerCallContextSource extends ServerCallContext {
      *
      * @return {Promise<void>} A promise that resolves when the cancellation is complete.
      */
-    async Cancel() {
-        if (this._cancellationTokenCore.IsCancellationRequested)
-            return;
-        this._clientStreamCore?.Finish();
-        return this._cancellationTokenCore.Cancel();
+    Cancel() {
+        return __awaiter(this, void 0, void 0, function* () {
+            var _a;
+            if (this._cancellationTokenCore.IsCancellationRequested)
+                return;
+            (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
+            return this._cancellationTokenCore.Cancel();
+        });
     }
-    _clientStreamCore;
     /**
      * Receives a request and forwards it to the client stream if it exists.
      * @param {IRequest<T>} request - The request to be received.
      */
     Receive(request) {
-        this._clientStreamCore?.Receive(request.request);
+        var _a;
+        (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Receive(request.request);
     }
     Finish() {
-        this._clientStreamCore?.Finish();
+        var _a;
+        (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
     }
     /**
      * Creates a new instance of ClientStreamReader and returns it.
@@ -178,14 +170,6 @@ export class ServerCallContextSource extends ServerCallContext {
     CreateServerStreamWriter() {
         return new ServerStreamWriter(this);
     }
-    /**
-     * CancellationTokenSource for controlling current call cancellation.
-     */
-    _cancellationTokenCore = new CancellationTokenSource();
-    /**
-     * The web socket connection.
-     */
-    _webSocketCore;
     /**
      * Kills all active tasks and close the connection.
      *
@@ -215,8 +199,9 @@ export class ServerCallContextSource extends ServerCallContext {
         return new Promise((resolve, reject) => {
             if (webSocket.getUserData().islive == false)
                 return reject("Connection is not live");
-            webSocket.send(Response.Serialize(response), true);
+            webSocket.send(Response_1.Response.Serialize(response), true);
             resolve();
         });
     }
 }
+exports.ServerCallContextSource = ServerCallContextSource;

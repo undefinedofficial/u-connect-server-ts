@@ -61,7 +61,7 @@ export declare class UConnectHubSource extends UConnectHub {
     HasService(name: string): boolean;
     GetService(name: string): IServiceConstructor | undefined;
     HasMethod(name: string): boolean;
-    GetMethod(name: string): any;
+    GetMethod(name: string): Method | undefined;
 }
 export {};
 //# sourceMappingURL=Hub.d.ts.map

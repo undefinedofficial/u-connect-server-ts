@@ -1,3 +1,4 @@
+"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -5,6 +6,9 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-export function isPromice(val) {
+Object.defineProperty(exports, "__esModule", { value: true });
+exports.isPromice = void 0;
+function isPromice(val) {
     return val instanceof Promise;
 }
+exports.isPromice = isPromice;
