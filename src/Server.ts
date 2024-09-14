@@ -14,6 +14,7 @@ import { ResponseError } from "./errors";
 import { Request } from "./models/Request";
 import { Response } from "./models/Response";
 import { UConnectHub, UConnectHubOptions, UConnectHubSource } from "./Hub";
+import os from "os";
 
 export interface UConnectOptions {
   /**
@@ -36,6 +37,7 @@ export interface UConnectRunOptions {
    */
   port?: number;
 }
+
 export class UConnectServer {
   private isRunning: boolean;
   public readonly isSSL: boolean;
@@ -223,12 +225,17 @@ export class UConnectServer {
   }
 
   Run({ host = "0.0.0.0", port = 3000 }: UConnectRunOptions = {}) {
+    if (this.isRunning) return;
+
     this.app.listen(host, port, (listenSocket) => {
       const protocol = this.isSSL ? "wss" : "ws";
-      if (listenSocket) console.log(`Listening on ${protocol}://${host}:${port}`);
-      else console.log(`Failed to listen on ${protocol}://${host}:${port}`);
+      if (listenSocket) {
+        console.log(`Listening on ${protocol}://${host}:${port}`);
 
-      this.isRunning = true;
+        this.isRunning = true;
+      } else {
+        console.log(`Failed to listen on ${protocol}://${host}:${port}`);
+      }
     });
   }
 }

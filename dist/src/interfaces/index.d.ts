@@ -1,10 +1,14 @@
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
 export * from "./Action";
 export * from "./IClientStreamReader";
-export * from "./IRequest";
-export * from "./IResponse";
 export * from "./IServerStreamWriter";
 export * from "./IService";
-export * from "./ITransporter";
 export * from "./IWebSocket";
 export * from "./Metadata";
 //# sourceMappingURL=index.d.ts.map

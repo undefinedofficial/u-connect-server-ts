@@ -7,9 +7,9 @@
  */
 
 import {
+  type IClientStreamReader,
+  type IServerStreamWriter,
   ServerCallContext,
-  IClientStreamReader,
-  IServerStreamWriter,
   UnaryMethod,
   ClientStreamMethod,
   ServerStreamMethod,
@@ -17,7 +17,7 @@ import {
   Status,
   MethodError,
   UConnectServer,
-} from "./src";
+} from "../src";
 
 const generate = (max: number, min: number = 0) => Math.floor(Math.random() * (max - min) + min);
 

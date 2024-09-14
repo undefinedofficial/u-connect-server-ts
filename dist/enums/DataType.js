@@ -1,4 +1,3 @@
-"use strict";
 /**
  * @u-connect/server-ts v2.0.0
  * https://github.com/undefinedofficial/u-connect-server-ts.git
@@ -6,9 +5,7 @@
  * Copyright (c) 2024 https://github.com/undefinedofficial
  * Released under the MIT license
  */
-Object.defineProperty(exports, "__esModule", { value: true });
-exports.DataType = void 0;
-var DataType;
+export var DataType;
 (function (DataType) {
     /** Received */
     DataType[DataType["CONNECT"] = 1] = "CONNECT";
@@ -40,4 +37,4 @@ var DataType;
      * Abort any pending request or stream.
      */
     DataType[DataType["ABORT"] = 9] = "ABORT";
-})(DataType || (exports.DataType = DataType = {}));
+})(DataType || (DataType = {}));

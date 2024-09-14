@@ -1,5 +1,12 @@
-export declare type ActionResultPromiceResponse<T> = PromiseLike<T>;
-export declare type ActionResultPromiceVoid = PromiseLike<void>;
-export declare type ActionResultResponse<T> = T;
-export declare type ActionResultVoid = void | any;
+/**
+ * @u-connect/server-ts v2.0.0
+ * https://github.com/undefinedofficial/u-connect-server-ts.git
+ *
+ * Copyright (c) 2024 https://github.com/undefinedofficial
+ * Released under the MIT license
+ */
+export type ActionResultPromiceResponse<T> = PromiseLike<T>;
+export type ActionResultPromiceVoid = PromiseLike<void>;
+export type ActionResultResponse<T> = T;
+export type ActionResultVoid = void | any;
 //# sourceMappingURL=Action.d.ts.map

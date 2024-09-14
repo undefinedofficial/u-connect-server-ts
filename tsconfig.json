@@ -1,20 +1,21 @@
 {
-  "include": ["src/**/*"],
+  "include": ["src/**/*", "example/app.ts"],
   "compilerOptions": {
-    "target": "es2018",
+    "target": "ES6",
     "experimentalDecorators": true,
     "emitDecoratorMetadata": true,
-    "module": "commonjs",
     "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
     "strictPropertyInitialization": false,
     "skipLibCheck": true,
     "outDir": "./dist",
-    "rootDir": "./src",
+    "rootDir": ".",
     "declarationMap": true,
     "declaration": true,
     "allowJs": true,
-    "isolatedModules": true
+    "isolatedModules": true,
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext"
   }
 }

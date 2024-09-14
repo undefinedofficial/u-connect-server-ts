@@ -1,1 +1,1 @@
-{"version":3,"file":"TransportOptions.d.ts","sourceRoot":"","sources":["../../../src/enums/TransportOptions.ts"],"names":[],"mappings":"AAAA,0BAAkB,gBAAgB;IAChC;;OAEG;IACH,OAAO,IAAI;IAEX;;OAEG;IACH,QAAQ,IAAI;CACb"}
+{"version":3,"file":"TransportOptions.d.ts","sourceRoot":"","sources":["../../../src/enums/TransportOptions.ts"],"names":[],"mappings":"AAAA;;;;;;GAMG;AAEF,0BAAkB,gBAAgB;IACjC;;OAEG;IACH,OAAO,IAAI;IAEX;;OAEG;IACH,QAAQ,IAAI;CACb"}
