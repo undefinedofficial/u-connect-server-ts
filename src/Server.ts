@@ -223,6 +223,9 @@ export class UConnectServer {
     return hub;
   }
 
+  /**
+   * Starts the server.
+   */
   Run({ host = "0.0.0.0", port = 3000 }: UConnectRunOptions = {}) {
     if (this.isRunning) return;
 
