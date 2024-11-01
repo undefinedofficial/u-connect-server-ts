@@ -7,8 +7,10 @@
  */
 
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
-import { Method } from "./models";
+import { IMethod, Method, ServerCallContext } from "./models";
 import { IWebSocket } from "./interfaces";
+
+type MayBePromise<T> = T | Promise<T>;
 
 interface IServiceConstructor {
   new (...args: any[]): any;
@@ -53,7 +55,7 @@ export interface UConnectHubOptions {
   /**
    *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
    */
-  onUpgrade?: (res: HttpResponse, req: HttpRequest) => false | Record<string, any>;
+  onUpgrade?: (res: HttpResponse, req: HttpRequest) => MayBePromise<false | Record<string, any>>;
 
   /**
    *  Close handler used to intercept WebSocket close events.
@@ -63,20 +65,25 @@ export interface UConnectHubOptions {
 
 export class UConnectHub {
   protected services: Map<string, IServiceConstructor>;
-  protected methods: Map<string, Method>;
+  protected methods: Map<string, IMethod>;
 
   constructor() {
     this.services = new Map<string, IServiceConstructor>();
-    this.methods = new Map<string, Method>();
+    this.methods = new Map<string, IMethod>();
+  }
+
+  private GetMethods(service: IServiceConstructor) {
+    const localMethods = (service as any).prototype.Methods as Map<string, Method>;
+    if (!localMethods) throw new Error(`Service ${service.name} has no Methods`);
+
+    return localMethods;
   }
 
   AddService<TService extends IServiceConstructor>(service: TService, name?: string) {
     if (this.methods.has(name || service.name))
       throw new Error(`Service ${name || service.name} already exists`);
 
-    const localMethods = (service as any).prototype.Methods as Map<string, Method>;
-    if (!localMethods) throw new Error(`Service ${name || service.name} has no Methods`);
-
+    const localMethods = this.GetMethods(service);
     for (const [method, descriptor] of localMethods)
       this.methods.set(Method.FullName(name || service.name, method), descriptor);
 

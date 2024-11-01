@@ -7,13 +7,18 @@
  */
 
 import { App, DISABLED, SHARED_COMPRESSOR, SSLApp, TemplatedApp } from "uWebSockets.js";
-import { MethodType, ServerCallContextSource } from "./models";
 import { UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
 import { ResponseError } from "./errors";
-import { Request } from "./models/Request";
-import { Response } from "./models/Response";
 import { UConnectHub, UConnectHubOptions, UConnectHubSource } from "./Hub";
+import { isPromice } from "./utils";
+import {
+  MethodType,
+  ServerCallContextManager,
+  ServerCallContextSource,
+  Request,
+  Response,
+} from "./models";
 
 export interface UConnectOptions {
   /**
@@ -77,7 +82,7 @@ export class UConnectServer {
       /**
        * Upgrades the connection to WebSocket if the Origin header is present.
        */
-      upgrade(res, req, context) {
+      async upgrade(res, req, context) {
         const SecWebSocketKey = req.getHeader("sec-websocket-key");
         const SecWebSocketProtocol = req.getHeader("sec-websocket-protocol");
         const SecWebSocketVersion = req.getHeader("sec-websocket-version");
@@ -88,29 +93,64 @@ export class UConnectServer {
           res.writeStatus("423").end();
           return;
         }
-
+        /* Keep track of abortions */
+        const upgradeAborted = { aborted: false };
+        /* User data storage for this connection */
         let userData = {};
-        if (onUpgrade) {
-          userData = onUpgrade(res, req);
+
+        /* This immediately calls open handler, you must not use res after this call */
+        const upgrade = () =>
+          res.upgrade<UserData>(
+            {
+              contexts: new ServerCallContextManager(),
+              ...userData,
+            },
+            SecWebSocketKey,
+            SecWebSocketProtocol,
+            SecWebSocketVersion,
+            context
+          );
+
+        // default strategy.
+        if (!onUpgrade) {
+          upgrade();
+          return;
+        }
+
+        const upgradeResult = onUpgrade(res, req);
+        // sync strategy
+        if (!isPromice(upgradeResult)) {
+          userData = upgradeResult;
+
           if (userData === false) {
             res.end();
             return;
           }
+
+          upgrade();
+          return;
         }
 
-        res.upgrade<UserData>(
-          {
-            contexts: new Map(),
-            ...userData,
-          },
-          SecWebSocketKey,
-          SecWebSocketProtocol,
-          SecWebSocketVersion,
-          context
-        );
+        // async strategy
+        res.onAborted(() => (upgradeAborted.aborted = true));
+        userData = await upgradeResult;
+
+        /* Handle aborts */
+        if (upgradeAborted.aborted) return;
+
+        /* Handle failures or aborts from onUpgrade */
+        if (userData === false) {
+          res.end();
+          return;
+        }
+
+        /* Cork any async response including upgrade */
+        res.cork(upgrade);
       },
       open(ws) {
-        ws.getUserData().islive = true;
+        const userData = ws.getUserData();
+        userData.islive = true;
+        userData.contexts.SetWebSocket(ws);
       },
       async message(ws, message, isBinary) {
         if (!isBinary) return ws.end(1005, "Message is not binary");
@@ -124,13 +164,7 @@ export class UConnectServer {
           return ws.end(1007, "Invalid message");
         }
         try {
-          if (request.type === DataType.ABORT) {
-            if (contexts.has(request.id)) {
-              await contexts.get(request.id)!.Cancel();
-              contexts.delete(request.id);
-            }
-            return;
-          }
+          if (request.type === DataType.ABORT) return await contexts.Abort(request.id);
 
           const method = hub.GetMethod(request.method);
 
@@ -142,15 +176,14 @@ export class UConnectServer {
               "Service not found"
             );
 
-          if (contexts.has(request.id)) {
+          if (contexts.Has(request.id)) {
             if (
               request.type === DataType.STREAM_CLIENT &&
               (method.Type === MethodType.ClientStreaming ||
                 method.Type === MethodType.DuplexStreaming)
-            ) {
-              contexts.get(request.id)!.Receive(request);
-              return;
-            }
+            )
+              return contexts.Get(request.id)!.Receive(request);
+
             if (request.type === DataType.STREAM_END) {
               if (
                 method.Type !== MethodType.ClientStreaming &&
@@ -163,8 +196,8 @@ export class UConnectServer {
                   `Method ${request.method} is not input stream`
                 );
 
-              contexts.get(request.id)!.Finish();
-              contexts.delete(request.id);
+              contexts.Get(request.id)!.Finish();
+              contexts.Delete(request.id);
               return;
             }
 
@@ -176,12 +209,11 @@ export class UConnectServer {
             );
           }
 
-          const context = new ServerCallContextSource(ws, request);
-          contexts.set(request.id, context);
-          await method.Invoke(request, context);
-          contexts.delete(request.id);
+          await method.Invoke(request, contexts.Create(request));
+
+          // method finished successfully then delete context.
+          if (!contexts.Delete(request.id)) console.warn("context id not found", request.id);
         } catch (error) {
-          contexts.delete(request.id);
           const response = new Response(
             request.id,
             request.method,
@@ -192,29 +224,27 @@ export class UConnectServer {
             "Internal server error"
           );
 
+          let internalError = true;
           if (error instanceof ResponseError) {
             response.status = error.status;
             response.error = error.message;
-
-            // unknown origin bug, fix after throws exception `connection closed` in this line.
-            if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
-
-            console.error(error);
-          } else {
-            // unknown origin bug, fix after throws exception `connection closed` in this line.
-            if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
-            throw error;
+            internalError = false;
           }
+
+          // unknown origin bug, fix after throws exception `connection closed` in this line.
+          if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
+
+          // method finished with error then delete context.
+          if (!contexts.Delete(request.id)) console.warn("context id not found", request.id);
+
+          // internal error? throw it up to caller.
+          if (internalError) throw error;
         }
       },
       async close(ws, code, message) {
-        console.log("Connection close", code, Buffer.from(message).toString("ascii"));
-
         const userData = ws.getUserData();
         userData.islive = false;
-        for (const context of userData.contexts.values()) await context.Cancel();
-
-        userData.contexts.clear();
+        userData.contexts.Close();
 
         onClose?.(ws, code, Buffer.from(message).toString("ascii"));
       },

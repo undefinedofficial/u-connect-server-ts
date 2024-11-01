@@ -27,10 +27,19 @@ export const enum MethodType {
   DuplexStreaming,
 }
 
+export interface IMethod {
+  Type: MethodType;
+  ServiceName: string;
+  Name: string;
+  FullName: string;
+  service: Object;
+  Invoke<I>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
+}
+
 /**
  * A generic representation of a remote method.
  */
-export abstract class Method {
+export abstract class Method implements IMethod {
   /**
    * Gets the type of the method.
    */
@@ -57,7 +66,7 @@ export abstract class Method {
   /**
    * handler for the method.
    */
-  Handler: (...args: any[]) => Promise<any>;
+  protected Handler: (...args: any[]) => Promise<any>;
 
   /**
    * Gets the service to which this method belongs.

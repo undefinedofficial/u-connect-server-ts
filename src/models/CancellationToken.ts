@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-import { isPromice } from "../utils/isPromice";
+import { isPromice } from "../utils";
 
 export class CancellationToken {
   private _isCancellationRequested: boolean = false;
@@ -18,8 +18,8 @@ export class CancellationToken {
   protected async Cancel() {
     this._isCancellationRequested = true;
     for (const callback of this._onCancellationRequestedCallbacks) {
-      if (isPromice(callback)) await callback();
-      else callback();
+      const result = callback();
+      if (isPromice(result)) await result;
     }
   }
 

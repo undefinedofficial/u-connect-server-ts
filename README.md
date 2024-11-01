@@ -1,6 +1,6 @@
 # u-connect/server-ts
 
-<img  width="480px" src="https://raw.githubusercontent.com/undefinedofficial/u-connect-client-ts/main/u-connect-logo.jpg">
+<img  width="480px" src="https://raw.githubusercontent.com/undefinedofficial/u-connect-server-ts/main/u-connect-logo.jpg">
 
 u-connect - это современная высокопроизводительная платформа удаленного вызова процедур с открытым исходным кодом. Она позволяет эффективно создавать и подключать сервисы для обмена данными между ними.
 
