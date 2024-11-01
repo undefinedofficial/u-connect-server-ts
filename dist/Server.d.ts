@@ -36,6 +36,9 @@ export declare class UConnectServer {
      * Creates a new hub endpoint. The hub is an instance for connecting to and interacting with it.
      */
     CreateHub({ path, sendPingsAutomatically, compression, idleTimeout, maxBackpressure, maxLifetime, maxPayloadLength, onUpgrade, onClose, }: UConnectHubOptions): UConnectHub;
+    /**
+     * Starts the server.
+     */
     Run({ host, port }?: UConnectRunOptions): void;
 }
 //# sourceMappingURL=Server.d.ts.map

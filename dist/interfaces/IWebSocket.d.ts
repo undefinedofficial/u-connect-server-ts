@@ -6,10 +6,10 @@
  * Released under the MIT license
  */
 import { WebSocket } from "uWebSockets.js";
-import { ServerCallContextSource } from "../models";
+import { ServerCallContextManager } from "../models";
 export interface UserData {
     islive?: boolean;
-    contexts: Map<number, ServerCallContextSource>;
+    contexts: ServerCallContextManager;
 }
 export type IWebSocket = WebSocket<UserData>;
 //# sourceMappingURL=IWebSocket.d.ts.map

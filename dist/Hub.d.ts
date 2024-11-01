@@ -6,8 +6,9 @@
  * Released under the MIT license
  */
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
-import { Method } from "./models";
+import { IMethod } from "./models";
 import { IWebSocket } from "./interfaces";
+type MayBePromise<T> = T | Promise<T>;
 interface IServiceConstructor {
     new (...args: any[]): any;
 }
@@ -44,7 +45,7 @@ export interface UConnectHubOptions {
     /**
      *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
      */
-    onUpgrade?: (res: HttpResponse, req: HttpRequest) => false | Record<string, any>;
+    onUpgrade?: (res: HttpResponse, req: HttpRequest) => MayBePromise<false | Record<string, any>>;
     /**
      *  Close handler used to intercept WebSocket close events.
      */
@@ -52,8 +53,9 @@ export interface UConnectHubOptions {
 }
 export declare class UConnectHub {
     protected services: Map<string, IServiceConstructor>;
-    protected methods: Map<string, Method>;
+    protected methods: Map<string, IMethod>;
     constructor();
+    private GetMethods;
     AddService<TService extends IServiceConstructor>(service: TService, name?: string): this;
     RemoveService(name: string): this;
 }
@@ -61,7 +63,7 @@ export declare class UConnectHubSource extends UConnectHub {
     HasService(name: string): boolean;
     GetService(name: string): IServiceConstructor | undefined;
     HasMethod(name: string): boolean;
-    GetMethod(name: string): Method | undefined;
+    GetMethod(name: string): IMethod | undefined;
 }
 export {};
 //# sourceMappingURL=Hub.d.ts.map

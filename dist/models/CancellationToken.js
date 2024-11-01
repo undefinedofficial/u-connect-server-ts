@@ -17,7 +17,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CancellationTokenSource = exports.CancellationToken = void 0;
-const isPromice_1 = require("../utils/isPromice");
+const utils_1 = require("../utils");
 class CancellationToken {
     constructor() {
         this._isCancellationRequested = false;
@@ -30,10 +30,9 @@ class CancellationToken {
         return __awaiter(this, void 0, void 0, function* () {
             this._isCancellationRequested = true;
             for (const callback of this._onCancellationRequestedCallbacks) {
-                if ((0, isPromice_1.isPromice)(callback))
-                    yield callback();
-                else
-                    callback();
+                const result = callback();
+                if ((0, utils_1.isPromice)(result))
+                    yield result;
             }
         });
     }

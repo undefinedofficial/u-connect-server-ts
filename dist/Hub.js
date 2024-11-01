@@ -14,12 +14,16 @@ class UConnectHub {
         this.services = new Map();
         this.methods = new Map();
     }
+    GetMethods(service) {
+        const localMethods = service.prototype.Methods;
+        if (!localMethods)
+            throw new Error(`Service ${service.name} has no Methods`);
+        return localMethods;
+    }
     AddService(service, name) {
         if (this.methods.has(name || service.name))
             throw new Error(`Service ${name || service.name} already exists`);
-        const localMethods = service.prototype.Methods;
-        if (!localMethods)
-            throw new Error(`Service ${name || service.name} has no Methods`);
+        const localMethods = this.GetMethods(service);
         for (const [method, descriptor] of localMethods)
             this.methods.set(models_1.Method.FullName(name || service.name, method), descriptor);
         this.services.set(name || service.name, service);
