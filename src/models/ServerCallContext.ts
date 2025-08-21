@@ -50,7 +50,6 @@ export abstract class ServerCallContext {
 
   /**
    * Deadline for this task. The call will be automatically cancelled once the deadline is exceeded.
-   * @deprecated not implemented
    */
   public readonly Deadline?: number;
 
@@ -62,7 +61,7 @@ export abstract class ServerCallContext {
   /**
    * Cancellation token signals when call is cancelled. It is also triggered when the deadline is exceeded or there was some other error (e.g. network problem).
    */
-  public CancellationToken: CancellationToken;
+  public readonly CancellationToken: CancellationToken;
 
   /**
    * Trailers to send back to client after finishes.
@@ -151,7 +150,6 @@ export class ServerStreamWriter<T> implements IServerStreamWriter<T> {
 }
 
 export class ServerCallContextSource extends ServerCallContext {
-  private isCancellationRequested: boolean = false;
   /**
    * Creates a new instance of ServerCallContext on every request for controlling current call.
    *
@@ -159,7 +157,11 @@ export class ServerCallContextSource extends ServerCallContext {
    * @param {IRequest<any>} request - The request object.
    * @param {number} [deadline] - The deadline for the operation (optional).
    */
-  constructor(webSocket: IWebSocket, request: Request<any>, deadline?: number) {
+  constructor(webSocket: IWebSocket, request: Request<any>) {
+    let deadline;
+    if (request.meta?.["timeout"]) {
+      deadline = parseInt(request.meta?.["timeout"]) || undefined;
+    }
     const cancellationTokenSource = new CancellationTokenSource(deadline);
     super(
       request.id,

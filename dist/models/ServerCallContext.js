@@ -102,10 +102,14 @@ class ServerCallContextSource extends ServerCallContext {
      * @param {IRequest<any>} request - The request object.
      * @param {number} [deadline] - The deadline for the operation (optional).
      */
-    constructor(webSocket, request, deadline) {
+    constructor(webSocket, request) {
+        var _a, _b;
+        let deadline;
+        if ((_a = request.meta) === null || _a === void 0 ? void 0 : _a["timeout"]) {
+            deadline = parseInt((_b = request.meta) === null || _b === void 0 ? void 0 : _b["timeout"]) || undefined;
+        }
         const cancellationTokenSource = new CancellationToken_1.CancellationTokenSource(deadline);
         super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
-        this.isCancellationRequested = false;
         /**
          * CancellationTokenSource for controlling current call cancellation.
          */

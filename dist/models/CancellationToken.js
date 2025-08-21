@@ -44,7 +44,7 @@ exports.CancellationToken = CancellationToken;
 class CancellationTokenSource extends CancellationToken {
     constructor(deadline) {
         super();
-        if (deadline)
+        if (deadline && deadline > 0)
             setTimeout(() => this.Cancel(), deadline);
     }
     get Token() {

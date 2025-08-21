@@ -23,7 +23,6 @@ export declare abstract class ServerCallContext {
     readonly Method: string;
     /**
      * Deadline for this task. The call will be automatically cancelled once the deadline is exceeded.
-     * @deprecated not implemented
      */
     readonly Deadline?: number;
     /**
@@ -33,7 +32,7 @@ export declare abstract class ServerCallContext {
     /**
      * Cancellation token signals when call is cancelled. It is also triggered when the deadline is exceeded or there was some other error (e.g. network problem).
      */
-    CancellationToken: CancellationToken;
+    readonly CancellationToken: CancellationToken;
     /**
      * Trailers to send back to client after finishes.
      */
@@ -69,7 +68,6 @@ export declare class ServerStreamWriter<T> implements IServerStreamWriter<T> {
     Write(message: T): Promise<void>;
 }
 export declare class ServerCallContextSource extends ServerCallContext {
-    private isCancellationRequested;
     /**
      * Creates a new instance of ServerCallContext on every request for controlling current call.
      *
@@ -77,7 +75,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @param {IRequest<any>} request - The request object.
      * @param {number} [deadline] - The deadline for the operation (optional).
      */
-    constructor(webSocket: IWebSocket, request: Request<any>, deadline?: number);
+    constructor(webSocket: IWebSocket, request: Request<any>);
     GetUserState<T>(): T;
     /**
      * Returns the current instance of ServerCallContext.

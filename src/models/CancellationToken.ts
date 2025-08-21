@@ -10,7 +10,8 @@ import { isPromice } from "../utils";
 
 export class CancellationToken {
   private _isCancellationRequested: boolean = false;
-  private _onCancellationRequestedCallbacks: (() => void | Promise<void>)[] = [];
+  private _onCancellationRequestedCallbacks: (() => void | Promise<void>)[] =
+    [];
   get IsCancellationRequested(): boolean {
     return this._isCancellationRequested;
   }
@@ -31,7 +32,7 @@ export class CancellationToken {
 export class CancellationTokenSource extends CancellationToken {
   constructor(deadline?: number) {
     super();
-    if (deadline) setTimeout(() => this.Cancel(), deadline);
+    if (deadline && deadline > 0) setTimeout(() => this.Cancel(), deadline);
   }
   get Token(): CancellationToken {
     return this;
