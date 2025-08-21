@@ -3,7 +3,7 @@ import { Request } from "./Request";
 import { ServerCallContextSource } from "./ServerCallContext";
 
 export class ServerCallContextManager {
-  private _contexts: Map<number, ServerCallContextSource>;
+  private _contexts: Map<string, ServerCallContextSource>;
   private _ws: IWebSocket;
   constructor() {
     this._contexts = new Map();
@@ -13,11 +13,11 @@ export class ServerCallContextManager {
     this._ws = ws;
   }
 
-  Has(id: number) {
+  Has(id: string) {
     return this._contexts.has(id);
   }
 
-  Get(id: number) {
+  Get(id: string) {
     return this._contexts.get(id);
   }
 
@@ -30,7 +30,7 @@ export class ServerCallContextManager {
   /**
    * Abort request and remove context from list.
    */
-  async Abort(id: number) {
+  async Abort(id: string) {
     const context = this._contexts.get(id);
     if (context) {
       await context.Cancel();
@@ -41,7 +41,7 @@ export class ServerCallContextManager {
   /**
    * Remove context from list.
    */
-  Delete(id: number) {
+  Delete(id: string) {
     return this._contexts.delete(id);
   }
 

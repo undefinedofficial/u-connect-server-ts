@@ -6,7 +6,13 @@
  * Released under the MIT license
  */
 
-import { App, DISABLED, SHARED_COMPRESSOR, SSLApp, TemplatedApp } from "uWebSockets.js";
+import {
+  App,
+  DISABLED,
+  SHARED_COMPRESSOR,
+  SSLApp,
+  TemplatedApp,
+} from "uWebSockets.js";
 import { UserData } from "./interfaces";
 import { DataType, Status } from "./enums";
 import { ResponseError } from "./errors";
@@ -15,7 +21,6 @@ import { isPromice } from "./utils";
 import {
   MethodType,
   ServerCallContextManager,
-  ServerCallContextSource,
   Request,
   Response,
 } from "./models";
@@ -51,7 +56,11 @@ export class UConnectServer {
     this.isRunning = false;
     this.isSSL = ssl ? true : false;
     this.app = ssl
-      ? SSLApp({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
+      ? SSLApp({
+          cert_file_name: ssl.cert,
+          key_file_name: ssl.key,
+          passphrase: ssl.passphrase,
+        })
       : App();
   }
 
@@ -69,7 +78,8 @@ export class UConnectServer {
     onUpgrade,
     onClose,
   }: UConnectHubOptions): UConnectHub {
-    if (this.isRunning) throw new Error("Can't create hub when Server is already running");
+    if (this.isRunning)
+      throw new Error("Can't create hub when Server is already running");
     const hub = new UConnectHubSource();
     this.app.ws<UserData>(path, {
       compression: compression ? SHARED_COMPRESSOR : DISABLED,
@@ -164,7 +174,8 @@ export class UConnectServer {
           return ws.end(1007, "Invalid message");
         }
         try {
-          if (request.type === DataType.ABORT) return await contexts.Abort(request.id);
+          if (request.type === DataType.ABORT)
+            return await contexts.Abort(request.id);
 
           const method = hub.GetMethod(request.method);
 
@@ -212,7 +223,8 @@ export class UConnectServer {
           await method.Invoke(request, contexts.Create(request));
 
           // method finished successfully then delete context.
-          if (!contexts.Delete(request.id)) console.warn("context id not found", request.id);
+          if (!contexts.Delete(request.id))
+            console.warn("context id not found", request.id);
         } catch (error) {
           const response = new Response(
             request.id,
@@ -232,10 +244,12 @@ export class UConnectServer {
           }
 
           // unknown origin bug, fix after throws exception `connection closed` in this line.
-          if (ws.getUserData().islive) ws.send(Response.Serialize(response), true);
+          if (ws.getUserData().islive)
+            ws.send(Response.Serialize(response), true);
 
           // method finished with error then delete context.
-          if (!contexts.Delete(request.id)) console.warn("context id not found", request.id);
+          if (!contexts.Delete(request.id))
+            console.warn("context id not found", request.id);
 
           // internal error? throw it up to caller.
           if (internalError) throw error;

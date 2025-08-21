@@ -15,7 +15,7 @@ export class Response<P> {
    *
    */
   constructor(
-    public readonly id: number,
+    public readonly id: string,
     public readonly method: string,
     public type: DataType,
     public response?: P | null,

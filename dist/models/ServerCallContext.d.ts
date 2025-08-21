@@ -11,12 +11,12 @@ import { CancellationToken, CancellationTokenSource } from "./CancellationToken"
 import { Request } from "./Request";
 import { Response } from "./Response";
 export declare abstract class ServerCallContext {
-    constructor(id: number, method: string, cancellationTokenSource: CancellationTokenSource, requestMeta?: RequestMetadata | null, deadline?: number);
+    constructor(id: string, method: string, cancellationTokenSource: CancellationTokenSource, requestMeta?: RequestMetadata | null, deadline?: number);
     abstract GetUserState<T>(): T;
     /**
      * Unique for the socket identifier of this task.
      */
-    readonly Id: number;
+    readonly Id: string;
     /**
      * Full name of method called in this task.
      */

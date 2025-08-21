@@ -14,13 +14,16 @@ import {
   RequestMetadata,
   ResponseMetadata,
 } from "../interfaces";
-import { CancellationToken, CancellationTokenSource } from "./CancellationToken";
+import {
+  CancellationToken,
+  CancellationTokenSource,
+} from "./CancellationToken";
 import { Request } from "./Request";
 import { Response } from "./Response";
 
 export abstract class ServerCallContext {
   constructor(
-    id: number,
+    id: string,
     method: string,
     cancellationTokenSource: CancellationTokenSource,
     requestMeta?: RequestMetadata | null,
@@ -38,7 +41,7 @@ export abstract class ServerCallContext {
   /**
    * Unique for the socket identifier of this task.
    */
-  public readonly Id: number;
+  public readonly Id: string;
 
   /**
    * Full name of method called in this task.
@@ -158,7 +161,13 @@ export class ServerCallContextSource extends ServerCallContext {
    */
   constructor(webSocket: IWebSocket, request: Request<any>, deadline?: number) {
     const cancellationTokenSource = new CancellationTokenSource(deadline);
-    super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
+    super(
+      request.id,
+      request.method,
+      cancellationTokenSource,
+      request.meta,
+      deadline
+    );
     this._cancellationTokenCore = cancellationTokenSource;
     this._webSocketCore = webSocket;
   }
@@ -208,7 +217,8 @@ export class ServerCallContextSource extends ServerCallContext {
    * @returns {IClientStreamReader<T>} - The newly created client stream reader.
    */
   CreateClientStreamReader<T>(): IClientStreamReader<T> {
-    if (!this._clientStreamCore) this._clientStreamCore = new ClientStreamReader<T>(this);
+    if (!this._clientStreamCore)
+      this._clientStreamCore = new ClientStreamReader<T>(this);
     return this._clientStreamCore;
   }
 
@@ -225,7 +235,8 @@ export class ServerCallContextSource extends ServerCallContext {
   /**
    * CancellationTokenSource for controlling current call cancellation.
    */
-  private _cancellationTokenCore: CancellationTokenSource = new CancellationTokenSource();
+  private _cancellationTokenCore: CancellationTokenSource =
+    new CancellationTokenSource();
 
   /**
    * The web socket connection.
@@ -260,9 +271,13 @@ export class ServerCallContextSource extends ServerCallContext {
     return ServerCallContextSource.Send(response, this._webSocketCore);
   }
 
-  public static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void> {
+  public static Send<T>(
+    response: Response<T>,
+    webSocket: IWebSocket
+  ): Promise<void> {
     return new Promise((resolve, reject) => {
-      if (webSocket.getUserData().islive == false) return reject("Connection is not live");
+      if (webSocket.getUserData().islive == false)
+        return reject("Connection is not live");
 
       webSocket.send(Response.Serialize(response), true);
       resolve();

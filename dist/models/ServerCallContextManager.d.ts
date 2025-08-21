@@ -6,17 +6,17 @@ export declare class ServerCallContextManager {
     private _ws;
     constructor();
     SetWebSocket(ws: IWebSocket): void;
-    Has(id: number): boolean;
-    Get(id: number): ServerCallContextSource | undefined;
+    Has(id: string): boolean;
+    Get(id: string): ServerCallContextSource | undefined;
     Create<P>(request: Request<P>): ServerCallContextSource;
     /**
      * Abort request and remove context from list.
      */
-    Abort(id: number): Promise<void>;
+    Abort(id: string): Promise<void>;
     /**
      * Remove context from list.
      */
-    Delete(id: number): boolean;
+    Delete(id: string): boolean;
     /**
      * Abort all requests and Remove all contexts from list.
      */

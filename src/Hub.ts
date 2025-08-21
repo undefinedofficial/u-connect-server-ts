@@ -7,7 +7,7 @@
  */
 
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
-import { IMethod, Method, ServerCallContext } from "./models";
+import { IMethod, Method } from "./models";
 import { IWebSocket } from "./interfaces";
 
 type MayBePromise<T> = T | Promise<T>;
@@ -49,13 +49,17 @@ export interface UConnectHubOptions {
 
   /**
    *  What permessage-deflate compression to use.
+   * (Not recoommended)
    */
   compression?: boolean;
 
   /**
    *  Upgrade handler used to intercept HTTP upgrade requests and potentially upgrade to WebSocket.
    */
-  onUpgrade?: (res: HttpResponse, req: HttpRequest) => MayBePromise<false | Record<string, any>>;
+  onUpgrade?: (
+    res: HttpResponse,
+    req: HttpRequest
+  ) => MayBePromise<false | Record<string, any>>;
 
   /**
    *  Close handler used to intercept WebSocket close events.
@@ -73,19 +77,29 @@ export class UConnectHub {
   }
 
   private GetMethods(service: IServiceConstructor) {
-    const localMethods = (service as any).prototype.Methods as Map<string, Method>;
-    if (!localMethods) throw new Error(`Service ${service.name} has no Methods`);
+    const localMethods = (service as any).prototype.Methods as Map<
+      string,
+      Method
+    >;
+    if (!localMethods)
+      throw new Error(`Service ${service.name} has no Methods`);
 
     return localMethods;
   }
 
-  AddService<TService extends IServiceConstructor>(service: TService, name?: string) {
+  AddService<TService extends IServiceConstructor>(
+    service: TService,
+    name?: string
+  ) {
     if (this.methods.has(name || service.name))
       throw new Error(`Service ${name || service.name} already exists`);
 
     const localMethods = this.GetMethods(service);
     for (const [method, descriptor] of localMethods)
-      this.methods.set(Method.FullName(name || service.name, method), descriptor);
+      this.methods.set(
+        Method.FullName(name || service.name, method),
+        descriptor
+      );
 
     this.services.set(name || service.name, service);
 
@@ -93,13 +107,18 @@ export class UConnectHub {
   }
 
   RemoveService(name: string) {
-    if (!this.methods.has(name)) throw new Error(`Service ${name} doesn't exist`);
+    if (!this.methods.has(name))
+      throw new Error(`Service ${name} doesn't exist`);
 
     const service = this.services.get(name)!;
-    const localMethods = (service as any).prototype.Methods as Map<string, Method>;
+    const localMethods = (service as any).prototype.Methods as Map<
+      string,
+      Method
+    >;
     if (!localMethods) throw new Error(`Service ${name} has no Methods`);
 
-    for (const [method, _] of localMethods) this.methods.delete(Method.FullName(name, method));
+    for (const [method, _] of localMethods)
+      this.methods.delete(Method.FullName(name, method));
     this.services.delete(name);
 
     return this;

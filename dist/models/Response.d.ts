@@ -7,7 +7,7 @@
  */
 import { Status, DataType } from "../enums";
 export declare class Response<P> {
-    readonly id: number;
+    readonly id: string;
     readonly method: string;
     type: DataType;
     response?: P | null | undefined;
@@ -19,7 +19,7 @@ export declare class Response<P> {
     /**
      *
      */
-    constructor(id: number, method: string, type: DataType, response?: P | null | undefined, status?: Status | null | undefined, meta?: {
+    constructor(id: string, method: string, type: DataType, response?: P | null | undefined, status?: Status | null | undefined, meta?: {
         [x: string]: string;
     } | null | undefined, error?: string | null | undefined);
     static Serialize<T>({ id, method, type, response, status, meta, error, }: Response<T>): Uint8Array;

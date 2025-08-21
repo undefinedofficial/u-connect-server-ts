@@ -40,6 +40,7 @@ export interface UConnectHubOptions {
     sendPingsAutomatically?: boolean;
     /**
      *  What permessage-deflate compression to use.
+     * (Not recoommended)
      */
     compression?: boolean;
     /**

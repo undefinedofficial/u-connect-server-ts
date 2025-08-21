@@ -28,7 +28,11 @@ class UConnectServer {
         this.isRunning = false;
         this.isSSL = ssl ? true : false;
         this.app = ssl
-            ? (0, uWebSockets_js_1.SSLApp)({ cert_file_name: ssl.cert, key_file_name: ssl.key, passphrase: ssl.passphrase })
+            ? (0, uWebSockets_js_1.SSLApp)({
+                cert_file_name: ssl.cert,
+                key_file_name: ssl.key,
+                passphrase: ssl.passphrase,
+            })
             : (0, uWebSockets_js_1.App)();
     }
     /**
