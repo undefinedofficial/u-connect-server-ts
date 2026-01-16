@@ -7,11 +7,9 @@
  */
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
 import { IMethod } from "./models";
-import { IWebSocket } from "./interfaces";
+import { IService, IWebSocket } from "./interfaces";
 type MayBePromise<T> = T | Promise<T>;
-interface IServiceConstructor {
-    new (...args: any[]): any;
-}
+type ServiceConstructor = new (...args: any) => IService;
 export interface UConnectHubOptions {
     /**
      *  Path to listen on.
@@ -53,16 +51,16 @@ export interface UConnectHubOptions {
     onClose?: (ws: IWebSocket, code: number, message: string) => void;
 }
 export declare class UConnectHub {
-    protected services: Map<string, IServiceConstructor>;
+    protected services: Map<string, ServiceConstructor>;
     protected methods: Map<string, IMethod>;
     constructor();
     private GetMethods;
-    AddService<TService extends IServiceConstructor>(service: TService, ...args: ConstructorParameters<TService>): this;
+    AddService<TService extends new (...args: any[]) => any>(service: TService, ...args: ConstructorParameters<TService>): this;
     RemoveService(name: string): this;
 }
 export declare class UConnectHubSource extends UConnectHub {
     HasService(name: string): boolean;
-    GetService(name: string): IServiceConstructor | undefined;
+    GetService(name: string): ServiceConstructor | undefined;
     HasMethod(name: string): boolean;
     GetMethod(name: string): IMethod | undefined;
 }

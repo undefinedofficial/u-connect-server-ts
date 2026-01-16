@@ -16,14 +16,12 @@ import {
   ServerStreamingMethod,
   UnaryMethod,
 } from "./models";
-import { IWebSocket } from "./interfaces";
-import { ServiceMethodsMap } from "./interfaces/ServiceMethodsMap";
+import { IService, IWebSocket, ServiceMethodsMap } from "./interfaces";
 
 type MayBePromise<T> = T | Promise<T>;
 
-interface IServiceConstructor {
-  new (...args: any[]): any;
-}
+type ServiceConstructor = new (...args: any) => IService;
+
 export interface UConnectHubOptions {
   /**
    *  Path to listen on.
@@ -77,7 +75,7 @@ export interface UConnectHubOptions {
 }
 
 export class UConnectHub {
-  protected services: Map<string, IServiceConstructor>;
+  protected services: Map<string, ServiceConstructor>;
   protected methods: Map<string, IMethod>;
 
   constructor() {
@@ -85,7 +83,7 @@ export class UConnectHub {
     this.methods = new Map();
   }
 
-  private GetMethods(service: IServiceConstructor) {
+  private GetMethods(service: ServiceConstructor) {
     const localMethods = (service as any).prototype
       .Methods as ServiceMethodsMap;
     if (!localMethods)
@@ -94,7 +92,7 @@ export class UConnectHub {
     return localMethods;
   }
 
-  AddService<TService extends IServiceConstructor>(
+  AddService<TService extends new (...args: any[]) => any>(
     service: TService,
     ...args: ConstructorParameters<TService>
   ) {

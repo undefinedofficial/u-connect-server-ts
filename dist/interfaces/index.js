@@ -27,3 +27,4 @@ __exportStar(require("./IServerStreamWriter"), exports);
 __exportStar(require("./IService"), exports);
 __exportStar(require("./IWebSocket"), exports);
 __exportStar(require("./Metadata"), exports);
+__exportStar(require("./ServiceMethodsMap"), exports);

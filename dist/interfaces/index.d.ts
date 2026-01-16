@@ -11,4 +11,5 @@ export * from "./IServerStreamWriter";
 export * from "./IService";
 export * from "./IWebSocket";
 export * from "./Metadata";
+export * from "./ServiceMethodsMap";
 //# sourceMappingURL=index.d.ts.map
