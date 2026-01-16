@@ -19,7 +19,7 @@ export class Request<P> {
     public readonly meta?: RequestMetadata | null
   ) {}
 
-  public static Deserialize<T>(
+  public static fromBinary<T>(
     data: ArrayLike<number> | BufferSource
   ): Request<T> {
     const [id, method, type, request, meta] = decode(data) as any;

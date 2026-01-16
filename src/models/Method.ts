@@ -35,7 +35,6 @@ export interface IMethod {
   ServiceName: string;
   Name: string;
   FullName: string;
-  service: Object;
   Invoke<I>(
     request: Request<I>,
     context: ServerCallContextSource
@@ -74,22 +73,16 @@ export abstract class Method implements IMethod {
    */
   protected Handler: (...args: any[]) => Promise<any>;
 
-  /**
-   * Gets the service to which this method belongs.
-   */
-  service: Object;
-
   constructor(
     type: MethodType,
-    service: Object,
+    serviceName: string,
     name: string,
     handler: (...args: any[]) => any
   ) {
     this.Type = type;
-    this.ServiceName = service.constructor.name;
+    this.ServiceName = serviceName;
     this.Name = name;
     this.Handler = handler;
-    this.service = service;
   }
 
   abstract Invoke<I>(
@@ -132,8 +125,12 @@ export class UnaryMethod<
   I extends Request<any>,
   O extends Response<any>
 > extends Method {
-  constructor(service: Object, name: string, handler: (...args: any[]) => any) {
-    super(MethodType.Unary, service, name, handler);
+  constructor(
+    serviceName: string,
+    name: string,
+    handler: (...args: any[]) => any
+  ) {
+    super(MethodType.Unary, serviceName, name, handler);
   }
 
   /**
@@ -170,8 +167,12 @@ export class UnaryMethod<
  * A non-generic representation of a remote client streaming method.
  */
 export class ClientStreamingMethod<I, O> extends Method {
-  constructor(service: Object, name: string, handler: (...args: any[]) => any) {
-    super(MethodType.ClientStreaming, service, name, handler);
+  constructor(
+    serviceName: string,
+    name: string,
+    handler: (...args: any[]) => any
+  ) {
+    super(MethodType.ClientStreaming, serviceName, name, handler);
   }
 
   /**
@@ -208,8 +209,12 @@ export class ClientStreamingMethod<I, O> extends Method {
  * A non-generic representation of a remote server streaming method.
  */
 export class ServerStreamingMethod<I, O> extends Method {
-  constructor(service: Object, name: string, handler: (...args: any[]) => any) {
-    super(MethodType.ServerStreaming, service, name, handler);
+  constructor(
+    serviceName: string,
+    name: string,
+    handler: (...args: any[]) => any
+  ) {
+    super(MethodType.ServerStreaming, serviceName, name, handler);
   }
 
   /**
@@ -246,8 +251,12 @@ export class ServerStreamingMethod<I, O> extends Method {
  * A non-generic representation of a remote duplex streaming method.
  */
 export class DuplexStreamingMethod<I, O> extends Method {
-  constructor(service: Object, name: string, handler: (...args: any[]) => any) {
-    super(MethodType.DuplexStreaming, service, name, handler);
+  constructor(
+    serviceName: string,
+    name: string,
+    handler: (...args: any[]) => any
+  ) {
+    super(MethodType.DuplexStreaming, serviceName, name, handler);
   }
 
   /**

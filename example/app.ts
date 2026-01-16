@@ -18,15 +18,28 @@ import {
   Status,
   MethodError,
   UConnectServer,
+  Service,
 } from "../src";
 
-const generate = (max: number, min: number = 0) => Math.floor(Math.random() * (max - min) + min);
+const generate = (max: number, min: number = 0) =>
+  Math.floor(Math.random() * (max - min) + min);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
+@Service()
 class HelloService {
+  /**
+   *
+   */
+  constructor(arg1: string, arg2: number) {
+    console.log("Created HelloService", arg1, arg2);
+  }
+
   @UnaryMethod()
-  public async SayHello(name: string, context: ServerCallContext): Promise<string | void> {
+  public async SayHello(
+    name: string,
+    context: ServerCallContext
+  ): Promise<string | void> {
     console.log("Unary method call", name);
     let isAborted = false;
     context.CancellationToken.Register(() => {
@@ -62,7 +75,10 @@ class HelloService {
 
     while (await requestStream.MoveNext()) {
       result += requestStream.Current;
-      console.log("Client stream method call requestStream.Current", requestStream.Current);
+      console.log(
+        "Client stream method call requestStream.Current",
+        requestStream.Current
+      );
     }
 
     if (isAborted) return;
@@ -127,10 +143,7 @@ const hub = app.CreateHub({
 });
 
 // Add the service with default name "HelloService".
-hub.AddService(HelloService);
-
-// Add the service with name "Hello".
-hub.AddService(HelloService, "Hello");
+hub.AddService(HelloService, "Hello", 1234);
 
 // Run the server. After this call a prohibited creating new the hubs, the server will be ready to accept connections.
 app.Run({ host: "127.0.0.1", port: 3000 });

@@ -168,7 +168,7 @@ export class UConnectServer {
         const { contexts } = ws.getUserData();
         let request: Request<unknown>;
         try {
-          request = Request.Deserialize(message);
+          request = Request.fromBinary(message);
         } catch (error) {
           console.warn(error);
           return ws.end(1007, "Invalid message");

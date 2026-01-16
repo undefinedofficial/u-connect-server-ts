@@ -22,6 +22,7 @@ export type {
   IServerStreamWriter,
   RequestMetadata,
   ResponseMetadata,
+  IService,
 } from "./interfaces";
 
 export * from "uWebSockets.js";

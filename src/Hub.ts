@@ -7,8 +7,17 @@
  */
 
 import { HttpRequest, HttpResponse } from "uWebSockets.js";
-import { IMethod, Method } from "./models";
+import {
+  ClientStreamingMethod,
+  DuplexStreamingMethod,
+  IMethod,
+  Method,
+  MethodType,
+  ServerStreamingMethod,
+  UnaryMethod,
+} from "./models";
 import { IWebSocket } from "./interfaces";
+import { ServiceMethodsMap } from "./interfaces/ServiceMethodsMap";
 
 type MayBePromise<T> = T | Promise<T>;
 
@@ -72,15 +81,13 @@ export class UConnectHub {
   protected methods: Map<string, IMethod>;
 
   constructor() {
-    this.services = new Map<string, IServiceConstructor>();
-    this.methods = new Map<string, IMethod>();
+    this.services = new Map();
+    this.methods = new Map();
   }
 
   private GetMethods(service: IServiceConstructor) {
-    const localMethods = (service as any).prototype.Methods as Map<
-      string,
-      Method
-    >;
+    const localMethods = (service as any).prototype
+      .Methods as ServiceMethodsMap;
     if (!localMethods)
       throw new Error(`Service ${service.name} has no Methods`);
 
@@ -89,19 +96,54 @@ export class UConnectHub {
 
   AddService<TService extends IServiceConstructor>(
     service: TService,
-    name?: string
+    ...args: ConstructorParameters<TService>
   ) {
-    if (this.methods.has(name || service.name))
-      throw new Error(`Service ${name || service.name} already exists`);
+    const serviceName =
+      (service as { serviceName?: string }).serviceName || service.name;
+
+    if (this.services.has(serviceName))
+      throw new Error(`Service ${serviceName} already exists`);
 
     const localMethods = this.GetMethods(service);
-    for (const [method, descriptor] of localMethods)
-      this.methods.set(
-        Method.FullName(name || service.name, method),
-        descriptor
-      );
+    for (const [methodName, { type, handler }] of localMethods) {
+      let method: Method;
 
-    this.services.set(name || service.name, service);
+      switch (type) {
+        case MethodType.Unary:
+          method = new UnaryMethod(serviceName, methodName, (...parameters) =>
+            handler.call(new service(...args), ...parameters)
+          );
+          break;
+        case MethodType.ClientStreaming:
+          method = new ClientStreamingMethod(
+            serviceName,
+            methodName,
+            (...parameters) => handler.call(new service(...args), ...parameters)
+          );
+          break;
+        case MethodType.ServerStreaming:
+          method = new ServerStreamingMethod(
+            serviceName,
+            methodName,
+            (...parameters) => handler.call(new service(...args), ...parameters)
+          );
+          break;
+        case MethodType.DuplexStreaming:
+          method = new DuplexStreamingMethod(
+            serviceName,
+            methodName,
+            (...parameters) => handler.call(new service(...args), ...parameters)
+          );
+          break;
+
+        default:
+          throw new Error();
+      }
+
+      this.methods.set(method.FullName, method);
+    }
+
+    this.services.set(serviceName, service);
 
     return this;
   }
@@ -111,10 +153,8 @@ export class UConnectHub {
       throw new Error(`Service ${name} doesn't exist`);
 
     const service = this.services.get(name)!;
-    const localMethods = (service as any).prototype.Methods as Map<
-      string,
-      Method
-    >;
+    const localMethods = this.GetMethods(service);
+
     if (!localMethods) throw new Error(`Service ${name} has no Methods`);
 
     for (const [method, _] of localMethods)
