@@ -37,11 +37,11 @@ class ClientStreamReader {
         this._buffer = [];
         this._finished = false;
     }
+    /**
+     * Send message to client continue stream.
+     */
     Continue() {
-        /**
-         * Send message to client continue stream.
-         */
-        this._context.Send({
+        return this._context.Send({
             id: this._context.Id,
             method: this._context.Method,
             type: enums_1.DataType.STREAM_CLIENT,
@@ -59,7 +59,7 @@ class ClientStreamReader {
                     this._current = this._buffer.shift();
                     return resolve(true);
                 }
-                this.Continue();
+                return this.Continue();
             };
             this._resolve = next;
             next();
@@ -189,23 +189,22 @@ class ServerCallContextSource extends ServerCallContext {
     }
     /**
      * Sends the response based on the provided input.
-     * @param {IResponse<T>} response - The response to be sent.
-     * @return {Promise<void>} A promise that resolves when the response is sent.
+     * @param {Response<T>} response - The response to be sent.
+     * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
      */
     Send(response) {
-        if (this._cancellationTokenCore.IsCancellationRequested) {
-            console.log(`Cancelling call ${response.method} with id ${response.id}`);
-            return Promise.resolve();
-        }
-        return ServerCallContextSource.Send(response, this._webSocketCore);
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this._cancellationTokenCore.IsCancellationRequested)
+                return Promise.resolve(false);
+            yield ServerCallContextSource.Send(response, this._webSocketCore);
+            return true;
+        });
     }
     static Send(response, webSocket) {
-        return new Promise((resolve, reject) => {
-            if (webSocket.getUserData().islive == false)
-                return reject("Connection is not live");
-            webSocket.send(Response_1.Response.Serialize(response), true);
-            resolve();
-        });
+        if (webSocket.getUserData().islive == false)
+            return Promise.reject("Connection is not live");
+        webSocket.send(Response_1.Response.Serialize(response), true);
+        return Promise.resolve();
     }
 }
 exports.ServerCallContextSource = ServerCallContextSource;

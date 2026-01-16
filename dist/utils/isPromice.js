@@ -7,8 +7,7 @@
  * Released under the MIT license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isPromice = void 0;
+exports.isPromice = isPromice;
 function isPromice(val) {
     return val instanceof Promise;
 }
-exports.isPromice = isPromice;

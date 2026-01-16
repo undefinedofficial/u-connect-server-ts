@@ -53,6 +53,9 @@ export declare class ClientStreamReader<T> implements IClientStreamReader<T> {
     private _finished;
     private _resolve;
     constructor(_context: ServerCallContextSource);
+    /**
+     * Send message to client continue stream.
+     */
     private Continue;
     get Current(): T;
     MoveNext(): Promise<boolean>;
@@ -65,7 +68,7 @@ export declare class ClientStreamReader<T> implements IClientStreamReader<T> {
 export declare class ServerStreamWriter<T> implements IServerStreamWriter<T> {
     private readonly _context;
     constructor(_context: ServerCallContextSource);
-    Write(message: T): Promise<void>;
+    Write(message: T): Promise<boolean>;
 }
 export declare class ServerCallContextSource extends ServerCallContext {
     /**
@@ -126,10 +129,10 @@ export declare class ServerCallContextSource extends ServerCallContext {
     Kill(): Promise<void>;
     /**
      * Sends the response based on the provided input.
-     * @param {IResponse<T>} response - The response to be sent.
-     * @return {Promise<void>} A promise that resolves when the response is sent.
+     * @param {Response<T>} response - The response to be sent.
+     * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
      */
-    Send<T>(response: Response<T>): Promise<void>;
+    Send<T>(response: Response<T>): Promise<boolean>;
     static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void>;
 }
 //# sourceMappingURL=ServerCallContext.d.ts.map

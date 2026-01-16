@@ -7,7 +7,7 @@
  * Released under the MIT license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.UnaryMethod = void 0;
+exports.UnaryMethod = UnaryMethod;
 const models_1 = require("../models");
 /**
  * @type {Decorator}
@@ -22,4 +22,3 @@ function UnaryMethod(name) {
         target.Methods.set(name || propertyName, new models_1.UnaryMethod(target, name || propertyName, method));
     };
 }
-exports.UnaryMethod = UnaryMethod;

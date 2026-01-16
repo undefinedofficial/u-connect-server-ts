@@ -141,8 +141,7 @@ class UConnectServer {
                         }
                         yield method.Invoke(request, contexts.Create(request));
                         // method finished successfully then delete context.
-                        if (!contexts.Delete(request.id))
-                            console.warn("context id not found", request.id);
+                        contexts.Delete(request.id);
                     }
                     catch (error) {
                         const response = new models_1.Response(request.id, request.method, enums_1.DataType.ABORT, null, enums_1.Status.INTERNAL, null, "Internal server error");
@@ -156,8 +155,7 @@ class UConnectServer {
                         if (ws.getUserData().islive)
                             ws.send(models_1.Response.Serialize(response), true);
                         // method finished with error then delete context.
-                        if (!contexts.Delete(request.id))
-                            console.warn("context id not found", request.id);
+                        contexts.Delete(request.id);
                         // internal error? throw it up to caller.
                         if (internalError)
                             throw error;

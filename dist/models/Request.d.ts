@@ -6,17 +6,14 @@
  * Released under the MIT license
  */
 import { DataType } from "../enums";
+import { RequestMetadata } from "../interfaces/Metadata";
 export declare class Request<P> {
     readonly id: string;
     readonly method: string;
     readonly type: DataType;
-    readonly request?: P | null | undefined;
-    readonly meta?: Readonly<{
-        [x: string]: string;
-    }> | null | undefined;
-    constructor(id: string, method: string, type: DataType, request?: P | null | undefined, meta?: Readonly<{
-        [x: string]: string;
-    }> | null | undefined);
+    readonly request?: (P | null) | undefined;
+    readonly meta?: (RequestMetadata | null) | undefined;
+    constructor(id: string, method: string, type: DataType, request?: (P | null) | undefined, meta?: (RequestMetadata | null) | undefined);
     static Deserialize<T>(data: ArrayLike<number> | BufferSource): Request<T>;
 }
 //# sourceMappingURL=Request.d.ts.map

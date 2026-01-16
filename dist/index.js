@@ -34,3 +34,4 @@ var Hub_1 = require("./Hub");
 Object.defineProperty(exports, "UConnectHub", { enumerable: true, get: function () { return Hub_1.UConnectHub; } });
 var Server_1 = require("./Server");
 Object.defineProperty(exports, "UConnectServer", { enumerable: true, get: function () { return Server_1.UConnectServer; } });
+__exportStar(require("uWebSockets.js"), exports);

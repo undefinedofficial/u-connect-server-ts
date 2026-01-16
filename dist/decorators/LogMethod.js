@@ -7,7 +7,7 @@
  * Released under the MIT license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.LogMethod = void 0;
+exports.LogMethod = LogMethod;
 /**
  * @type {Decorator}
  */
@@ -23,4 +23,3 @@ function LogMethod() {
         };
     };
 }
-exports.LogMethod = LogMethod;

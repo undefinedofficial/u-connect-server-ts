@@ -1,6 +1,6 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "2.2.2",
+  "version": "2.3.2",
   "files": [
     "dist/**"
   ],

@@ -91,14 +91,15 @@ class UnaryMethod extends Method {
             try {
                 if (request.type !== enums_1.DataType.UNARY_CLIENT)
                     throw new MethodError_1.MethodError(enums_1.Status.UNIMPLEMENTED, `Method ${request.method} is a unary`);
-                response.response = (_a = (yield this.Handler(request.request, context))) !== null && _a !== void 0 ? _a : null;
+                response.response =
+                    (_a = (yield this.Handler(request.request, context))) !== null && _a !== void 0 ? _a : null;
                 response.status = context.Status;
             }
             catch (error) {
                 this.HandleError(error, response, context);
             }
             finally {
-                return context.Send(response);
+                context.Send(response);
             }
         });
     }
@@ -133,7 +134,7 @@ class ClientStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                return context.Send(response);
+                context.Send(response);
             }
         });
     }
@@ -167,7 +168,7 @@ class ServerStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                return context.Send(response);
+                context.Send(response);
             }
         });
     }
@@ -203,7 +204,7 @@ class DuplexStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                return context.Send(response);
+                context.Send(response);
             }
         });
     }

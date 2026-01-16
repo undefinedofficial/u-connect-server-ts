@@ -7,7 +7,7 @@
  * Released under the MIT license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.DuplexStreamMethod = void 0;
+exports.DuplexStreamMethod = DuplexStreamMethod;
 const models_1 = require("../models");
 /**
  * @type {Decorator}
@@ -22,4 +22,3 @@ function DuplexStreamMethod(name) {
         target.Methods.set(name || propertyName, new models_1.DuplexStreamingMethod(target, name || propertyName, method));
     };
 }
-exports.DuplexStreamMethod = DuplexStreamMethod;

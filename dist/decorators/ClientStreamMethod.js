@@ -7,7 +7,7 @@
  * Released under the MIT license
  */
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.ClientStreamMethod = void 0;
+exports.ClientStreamMethod = ClientStreamMethod;
 const models_1 = require("../models");
 /**
  * @type {Decorator}
@@ -22,4 +22,3 @@ function ClientStreamMethod(name) {
         target.Methods.set(name || propertyName, new models_1.ClientStreamingMethod(target, name || propertyName, method));
     };
 }
-exports.ClientStreamMethod = ClientStreamMethod;
