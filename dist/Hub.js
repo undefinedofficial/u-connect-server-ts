@@ -15,25 +15,45 @@ class UConnectHub {
         this.methods = new Map();
     }
     GetMethods(service) {
-        const localMethods = service.prototype.Methods;
+        const localMethods = service.prototype
+            .Methods;
         if (!localMethods)
             throw new Error(`Service ${service.name} has no Methods`);
         return localMethods;
     }
-    AddService(service, name) {
-        if (this.methods.has(name || service.name))
-            throw new Error(`Service ${name || service.name} already exists`);
+    AddService(service, ...args) {
+        const serviceName = service.serviceName || service.name;
+        if (this.services.has(serviceName))
+            throw new Error(`Service ${serviceName} already exists`);
         const localMethods = this.GetMethods(service);
-        for (const [method, descriptor] of localMethods)
-            this.methods.set(models_1.Method.FullName(name || service.name, method), descriptor);
-        this.services.set(name || service.name, service);
+        for (const [methodName, { type, handler }] of localMethods) {
+            let method;
+            switch (type) {
+                case models_1.MethodType.Unary:
+                    method = new models_1.UnaryMethod(serviceName, methodName, (...parameters) => handler.call(new service(...args), ...parameters));
+                    break;
+                case models_1.MethodType.ClientStreaming:
+                    method = new models_1.ClientStreamingMethod(serviceName, methodName, (...parameters) => handler.call(new service(...args), ...parameters));
+                    break;
+                case models_1.MethodType.ServerStreaming:
+                    method = new models_1.ServerStreamingMethod(serviceName, methodName, (...parameters) => handler.call(new service(...args), ...parameters));
+                    break;
+                case models_1.MethodType.DuplexStreaming:
+                    method = new models_1.DuplexStreamingMethod(serviceName, methodName, (...parameters) => handler.call(new service(...args), ...parameters));
+                    break;
+                default:
+                    throw new Error();
+            }
+            this.methods.set(method.FullName, method);
+        }
+        this.services.set(serviceName, service);
         return this;
     }
     RemoveService(name) {
         if (!this.methods.has(name))
             throw new Error(`Service ${name} doesn't exist`);
         const service = this.services.get(name);
-        const localMethods = service.prototype.Methods;
+        const localMethods = this.GetMethods(service);
         if (!localMethods)
             throw new Error(`Service ${name} has no Methods`);
         for (const [method, _] of localMethods)

@@ -8,4 +8,7 @@
 export interface IService {
     [key: string]: any;
 }
+export interface IServiceConstructor<T extends IService> {
+    new (...args: any): T;
+}
 //# sourceMappingURL=IService.d.ts.map

@@ -11,6 +11,6 @@ export { Status } from "./enums";
 export { MethodError } from "./errors";
 export { UConnectHub, type UConnectHubOptions } from "./Hub";
 export { UConnectServer, type UConnectOptions, type UConnectRunOptions, } from "./Server";
-export type { IClientStreamReader, IServerStreamWriter, RequestMetadata, ResponseMetadata, } from "./interfaces";
+export type { IClientStreamReader, IServerStreamWriter, RequestMetadata, ResponseMetadata, IService, } from "./interfaces";
 export * from "uWebSockets.js";
 //# sourceMappingURL=index.d.ts.map

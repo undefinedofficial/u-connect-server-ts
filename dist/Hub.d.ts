@@ -57,7 +57,7 @@ export declare class UConnectHub {
     protected methods: Map<string, IMethod>;
     constructor();
     private GetMethods;
-    AddService<TService extends IServiceConstructor>(service: TService, name?: string): this;
+    AddService<TService extends IServiceConstructor>(service: TService, ...args: ConstructorParameters<TService>): this;
     RemoveService(name: string): this;
 }
 export declare class UConnectHubSource extends UConnectHub {

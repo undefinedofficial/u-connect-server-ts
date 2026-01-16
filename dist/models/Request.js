@@ -17,7 +17,7 @@ class Request {
         this.request = request;
         this.meta = meta;
     }
-    static Deserialize(data) {
+    static fromBinary(data) {
         const [id, method, type, request, meta] = (0, msgpack_1.decode)(data);
         return new Request(id, method, type, request, meta);
     }

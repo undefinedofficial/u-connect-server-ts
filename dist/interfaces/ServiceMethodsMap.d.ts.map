@@ -1,0 +1,1 @@
+{"version":3,"file":"ServiceMethodsMap.d.ts","sourceRoot":"","sources":["../../src/interfaces/ServiceMethodsMap.ts"],"names":[],"mappings":"AAAA,OAAO,EAAE,UAAU,EAAE,MAAM,WAAW,CAAC;AAEvC,MAAM,MAAM,iBAAiB,GAAG,GAAG,CACjC,MAAM,EACN;IAAE,IAAI,EAAE,UAAU,CAAC;IAAC,OAAO,EAAE,QAAQ,CAAA;CAAE,CACxC,CAAC"}

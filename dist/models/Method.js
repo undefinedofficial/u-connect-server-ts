@@ -42,12 +42,11 @@ class Method {
     get FullName() {
         return Method.FullName(this.ServiceName, this.Name);
     }
-    constructor(type, service, name, handler) {
+    constructor(type, serviceName, name, handler) {
         this.Type = type;
-        this.ServiceName = service.constructor.name;
+        this.ServiceName = serviceName;
         this.Name = name;
         this.Handler = handler;
-        this.service = service;
     }
     HandleError(error, response, context) {
         if (error instanceof MethodError_1.MethodError) {
@@ -74,8 +73,8 @@ exports.Method = Method;
  * A non-generic representation of a remote unary method.
  */
 class UnaryMethod extends Method {
-    constructor(service, name, handler) {
-        super(MethodType.Unary, service, name, handler);
+    constructor(serviceName, name, handler) {
+        super(MethodType.Unary, serviceName, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -109,8 +108,8 @@ exports.UnaryMethod = UnaryMethod;
  * A non-generic representation of a remote client streaming method.
  */
 class ClientStreamingMethod extends Method {
-    constructor(service, name, handler) {
-        super(MethodType.ClientStreaming, service, name, handler);
+    constructor(serviceName, name, handler) {
+        super(MethodType.ClientStreaming, serviceName, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -144,8 +143,8 @@ exports.ClientStreamingMethod = ClientStreamingMethod;
  * A non-generic representation of a remote server streaming method.
  */
 class ServerStreamingMethod extends Method {
-    constructor(service, name, handler) {
-        super(MethodType.ServerStreaming, service, name, handler);
+    constructor(serviceName, name, handler) {
+        super(MethodType.ServerStreaming, serviceName, name, handler);
     }
     /**
      * Invoke handler for the method.
@@ -178,8 +177,8 @@ exports.ServerStreamingMethod = ServerStreamingMethod;
  * A non-generic representation of a remote duplex streaming method.
  */
 class DuplexStreamingMethod extends Method {
-    constructor(service, name, handler) {
-        super(MethodType.DuplexStreaming, service, name, handler);
+    constructor(serviceName, name, handler) {
+        super(MethodType.DuplexStreaming, serviceName, name, handler);
     }
     /**
      * Invoke handler for the method.

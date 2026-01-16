@@ -21,8 +21,5 @@ var __exportStar = (this && this.__exportStar) || function(m, exports) {
     for (var p in m) if (p !== "default" && !Object.prototype.hasOwnProperty.call(exports, p)) __createBinding(exports, m, p);
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-__exportStar(require("./LogMethod"), exports);
-__exportStar(require("./UnaryMethod"), exports);
-__exportStar(require("./ClientStreamMethod"), exports);
-__exportStar(require("./ServerStreamMethod"), exports);
-__exportStar(require("./DuplexStreamMethod"), exports);
+__exportStar(require("./Service"), exports);
+__exportStar(require("./Method"), exports);

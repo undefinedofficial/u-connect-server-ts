@@ -112,7 +112,7 @@ class UConnectServer {
                     const { contexts } = ws.getUserData();
                     let request;
                     try {
-                        request = models_1.Request.Deserialize(message);
+                        request = models_1.Request.fromBinary(message);
                     }
                     catch (error) {
                         console.warn(error);

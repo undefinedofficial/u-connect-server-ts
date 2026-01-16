@@ -24,7 +24,6 @@ export interface IMethod {
     ServiceName: string;
     Name: string;
     FullName: string;
-    service: Object;
     Invoke<I>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
 }
 /**
@@ -52,11 +51,7 @@ export declare abstract class Method implements IMethod {
      * handler for the method.
      */
     protected Handler: (...args: any[]) => Promise<any>;
-    /**
-     * Gets the service to which this method belongs.
-     */
-    service: Object;
-    constructor(type: MethodType, service: Object, name: string, handler: (...args: any[]) => any);
+    constructor(type: MethodType, serviceName: string, name: string, handler: (...args: any[]) => any);
     abstract Invoke<I>(request: Request<I>, context: ServerCallContext): Promise<void>;
     protected HandleError(error: unknown, response: Response<any>, context: ServerCallContext): void;
     /**
@@ -70,7 +65,7 @@ export declare abstract class Method implements IMethod {
  * A non-generic representation of a remote unary method.
  */
 export declare class UnaryMethod<I extends Request<any>, O extends Response<any>> extends Method {
-    constructor(service: Object, name: string, handler: (...args: any[]) => any);
+    constructor(serviceName: string, name: string, handler: (...args: any[]) => any);
     /**
      * Invoke handler for the method.
      */
@@ -80,7 +75,7 @@ export declare class UnaryMethod<I extends Request<any>, O extends Response<any>
  * A non-generic representation of a remote client streaming method.
  */
 export declare class ClientStreamingMethod<I, O> extends Method {
-    constructor(service: Object, name: string, handler: (...args: any[]) => any);
+    constructor(serviceName: string, name: string, handler: (...args: any[]) => any);
     /**
      * Invoke handler for the method.
      */
@@ -90,7 +85,7 @@ export declare class ClientStreamingMethod<I, O> extends Method {
  * A non-generic representation of a remote server streaming method.
  */
 export declare class ServerStreamingMethod<I, O> extends Method {
-    constructor(service: Object, name: string, handler: (...args: any[]) => any);
+    constructor(serviceName: string, name: string, handler: (...args: any[]) => any);
     /**
      * Invoke handler for the method.
      */
@@ -100,7 +95,7 @@ export declare class ServerStreamingMethod<I, O> extends Method {
  * A non-generic representation of a remote duplex streaming method.
  */
 export declare class DuplexStreamingMethod<I, O> extends Method {
-    constructor(service: Object, name: string, handler: (...args: any[]) => any);
+    constructor(serviceName: string, name: string, handler: (...args: any[]) => any);
     /**
      * Invoke handler for the method.
      *  @param request - The request object.

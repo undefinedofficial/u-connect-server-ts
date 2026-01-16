@@ -14,6 +14,6 @@ export declare class Request<P> {
     readonly request?: (P | null) | undefined;
     readonly meta?: (RequestMetadata | null) | undefined;
     constructor(id: string, method: string, type: DataType, request?: (P | null) | undefined, meta?: (RequestMetadata | null) | undefined);
-    static Deserialize<T>(data: ArrayLike<number> | BufferSource): Request<T>;
+    static fromBinary<T>(data: ArrayLike<number> | BufferSource): Request<T>;
 }
 //# sourceMappingURL=Request.d.ts.map
