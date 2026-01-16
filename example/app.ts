@@ -28,9 +28,6 @@ const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
 @Service()
 class HelloService {
-  /**
-   *
-   */
   constructor(arg1: string, arg2: number) {
     console.log("Created HelloService", arg1, arg2);
   }

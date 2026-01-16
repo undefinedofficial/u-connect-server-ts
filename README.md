@@ -41,52 +41,16 @@ const app = new UConnectServer({
 
 ### Сервисы
 
-Все методы хранятся в сервисах, каждый метод чтобы быть доступным для вызова должен содержить один из декораторов:
+Все методы хранятся в сервисах, каждый метод чтобы быть доступным для вызова должен содержать один из декораторов:
 
 1. UnaryMethod - запрос --- ответ.
 2. ServerStreamMethod - запрос --> поток данных.
 3. ClientStreamMethod - поток данных >-- ответ.
 4. DuplexStreamMethod - поток данных <-> поток данных.
 
-Каждый декоратор имеет не обязательный параметр имени, по умолчанию имя метода.
-
-```ts
-class HelloService {
-  @UnaryMethod()
-  public async SayHello(name: string, context: ServerCallContext): Promise<string> {
-    // code...
-  }
-
-  @ClientStreamMethod()
-  public async SayHelloClientStream(
-    requestStream: IClientStreamReader<string>,
-    context: ServerCallContext
-  ) {
-    // code...
-  }
-
-  @ServerStreamMethod()
-  public async SayHelloServerStream(
-    request: string,
-    responseStream: IServerStreamWriter<string>,
-    context: ServerCallContext
-  ) {
-    // code...
-  }
-
-  @DuplexStreamMethod()
-  public async SayHelloDuplexStream(
-    requestStream: IClientStreamReader<string>,
-    responseStream: IServerStreamWriter<string>,
-    context: ServerCallContext
-  ) {
-    // code...
-  }
-}
-```
+Каждый декоратор имеет не обязательный параметр имени, по умолчанию используется имя метода.
 
 При вызове метода передается контекст управления для каждого запроса он уникальный.
-
 Каждый контекст имеет
 
 1. Id - уникальный идентификатор запроса для каждого запроса уникальный (обычно не используется, но применение можно найти)
@@ -103,7 +67,7 @@ class HelloService {
 
 Все сервисы доступны после регистрации в хабе.
 
-Создем хаб,
+Создем хаб:
 
 ```ts
 const hub = app.CreateHub({
@@ -119,10 +83,43 @@ const hub = app.CreateHub({
 });
 ```
 
-Регистрируем сервисы, первым параметром сервис, второй не обязательный название по умолчанию это имя класса.
+Регистрируем сервисы, первым параметром сервис.
 
 ```ts
+// Регистрация без зависимостей
 hub.AddService(HelloService);
+```
+
+### Внедрение зависимостей (DI)
+
+Поддержка внедрение зависимостей (Dependency Injection) при регистрации сервисов. Вы можете передавать зависимости в конструктор сервиса при его регистрации в хабе.
+
+Пример использования DI:
+
+```ts
+@Service()
+class HelloService {
+  constructor(private dbConnection: Database, private logger: Logger) {
+    // Используем переданные зависимости (СЕРВИС ИНИЦИАЛИЗИРУЕТСЯ ПРИ КАЖДОМ НОВОМ ЗАПРОСЕ!)
+  }
+
+  @UnaryMethod()
+  public async SayHello(
+    name: string,
+    context: ServerCallContext
+  ): Promise<string> {
+    this.logger.log(`SayHello called with name: ${name}`);
+    const user = await this.dbConnection.getUser(name);
+    return `Hello ${user.name}`;
+  }
+}
+
+// Создаем экземпляры зависимостей
+const db = new Database();
+const logger = new Logger();
+
+// Регистрируем сервис с зависимостями
+hub.AddService(HelloService, db, logger);
 ```
 
 ### Запуск
@@ -140,7 +137,10 @@ app.Run({ host: "127.0.0.1", port: 3000 });
 ```ts
 class HelloService {
   @UnaryMethod()
-  public async SayHello(name: string, context: ServerCallContext): Promise<string> {
+  public async SayHello(
+    name: string,
+    context: ServerCallContext
+  ): Promise<string> {
     throw MethodError(Status.UNIMPLEMENTED, 'Method "SayHello" unimplemented!');
   }
 }
@@ -184,6 +184,22 @@ class HelloService {
 }
 ```
 
+### UnaryMethod - запрос-ответ
+
+Декоратор `@UnaryMethod` используется для методов, которые реализуют простой запрос-ответ паттерн. Это наиболее распространенный тип взаимодействия, где клиент отправляет один запрос и получает один ответ.
+
+```ts
+class HelloService {
+  @UnaryMethod()
+  public async SayHello(
+    name: string,
+    context: ServerCallContext
+  ): Promise<string> {
+    return `Hello, ${name}!`;
+  }
+}
+```
+
 ### Стриминг с сервера - ServerStreamMethod
 
 Для стриминга с сервера у нас есть интерфейс вывода, который мы вызываем каждый раз когда собираемся что-то отправить.
@@ -200,7 +216,10 @@ class HelloService {
   ) {
     return new Promise((resolve, reject) => {
       let i = 0;
-      const interval = setInterval(() => responseStream.Write(`Hello №${++i}`), 1000);
+      const interval = setInterval(
+        () => responseStream.Write(`Hello №${++i}`),
+        1000
+      );
       context.CancellationToken.Register(() => {
         resolve();
         clearInterval(interval);
@@ -250,6 +269,49 @@ class HelloService {
       // отправляем обратно
       await responseStream.Write(requestStream.Current);
     }
+  }
+}
+```
+
+#### Декоратор @Service
+
+Декоратор `@Service` позволяет задать пользовательское имя для сервиса. По умолчанию используется имя класса.
+
+```ts
+@Service(/* "Hello" */)
+class HelloService {
+  @UnaryMethod()
+  public async SayHello(
+    name: string,
+    context: ServerCallContext
+  ): Promise<string> {
+    // code...
+  }
+
+  @ClientStreamMethod()
+  public async SayHelloClientStream(
+    requestStream: IClientStreamReader<string>,
+    context: ServerCallContext
+  ) {
+    // code...
+  }
+
+  @ServerStreamMethod()
+  public async SayHelloServerStream(
+    request: string,
+    responseStream: IServerStreamWriter<string>,
+    context: ServerCallContext
+  ) {
+    // code...
+  }
+
+  @DuplexStreamMethod()
+  public async SayHelloDuplexStream(
+    requestStream: IClientStreamReader<string>,
+    responseStream: IServerStreamWriter<string>,
+    context: ServerCallContext
+  ) {
+    // code...
   }
 }
 ```

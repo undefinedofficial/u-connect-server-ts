@@ -11,9 +11,6 @@ import { Status, DataType } from "../enums";
 import { ResponseMetadata } from "../interfaces/Metadata";
 
 export class Response<P> {
-  /**
-   *
-   */
   constructor(
     public readonly id: string,
     public readonly method: string,
