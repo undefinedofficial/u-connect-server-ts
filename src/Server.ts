@@ -223,8 +223,7 @@ export class UConnectServer {
           await method.Invoke(request, contexts.Create(request));
 
           // method finished successfully then delete context.
-          if (!contexts.Delete(request.id))
-            console.warn("context id not found", request.id);
+          contexts.Delete(request.id);
         } catch (error) {
           const response = new Response(
             request.id,
@@ -248,8 +247,7 @@ export class UConnectServer {
             ws.send(Response.Serialize(response), true);
 
           // method finished with error then delete context.
-          if (!contexts.Delete(request.id))
-            console.warn("context id not found", request.id);
+          contexts.Delete(request.id);
 
           // internal error? throw it up to caller.
           if (internalError) throw error;

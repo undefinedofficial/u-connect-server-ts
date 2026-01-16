@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-﻿export const enum TransportOptions {
+export const enum TransportOptions {
   /**
    * Write Message and wait confirm from client, keep the order (Slow)
    */

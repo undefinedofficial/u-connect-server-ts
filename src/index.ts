@@ -11,7 +11,11 @@ export { ServerCallContext, CancellationToken } from "./models";
 export { Status } from "./enums";
 export { MethodError } from "./errors";
 export { UConnectHub, type UConnectHubOptions } from "./Hub";
-export { UConnectServer, type UConnectOptions, type UConnectRunOptions } from "./Server";
+export {
+  UConnectServer,
+  type UConnectOptions,
+  type UConnectRunOptions,
+} from "./Server";
 
 export type {
   IClientStreamReader,
@@ -19,3 +23,5 @@ export type {
   RequestMetadata,
   ResponseMetadata,
 } from "./interfaces";
+
+export * from "uWebSockets.js";

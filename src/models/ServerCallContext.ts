@@ -92,11 +92,11 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
 
   constructor(private readonly _context: ServerCallContextSource) {}
 
+  /**
+   * Send message to client continue stream.
+   */
   private Continue() {
-    /**
-     * Send message to client continue stream.
-     */
-    this._context.Send({
+    return this._context.Send({
       id: this._context.Id,
       method: this._context.Method,
       type: DataType.STREAM_CLIENT,
@@ -116,7 +116,7 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
           return resolve(true);
         }
 
-        this.Continue();
+        return this.Continue();
       };
       this._resolve = next;
       next();
@@ -139,7 +139,7 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
 
 export class ServerStreamWriter<T> implements IServerStreamWriter<T> {
   constructor(private readonly _context: ServerCallContextSource) {}
-  Write(message: T): Promise<void> {
+  Write(message: T): Promise<boolean> {
     return this._context.Send<T>({
       id: this._context.Id,
       method: this._context.Method,
@@ -262,27 +262,25 @@ export class ServerCallContextSource extends ServerCallContext {
 
   /**
    * Sends the response based on the provided input.
-   * @param {IResponse<T>} response - The response to be sent.
-   * @return {Promise<void>} A promise that resolves when the response is sent.
+   * @param {Response<T>} response - The response to be sent.
+   * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
-  Send<T>(response: Response<T>): Promise<void> {
-    if (this._cancellationTokenCore.IsCancellationRequested) {
-      console.log(`Cancelling call ${response.method} with id ${response.id}`);
-      return Promise.resolve();
-    }
-    return ServerCallContextSource.Send(response, this._webSocketCore);
+  async Send<T>(response: Response<T>): Promise<boolean> {
+    if (this._cancellationTokenCore.IsCancellationRequested)
+      return Promise.resolve(false);
+
+    await ServerCallContextSource.Send(response, this._webSocketCore);
+    return true;
   }
 
   public static Send<T>(
     response: Response<T>,
     webSocket: IWebSocket
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      if (webSocket.getUserData().islive == false)
-        return reject("Connection is not live");
+    if (webSocket.getUserData().islive == false)
+      return Promise.reject("Connection is not live");
 
-      webSocket.send(Response.Serialize(response), true);
-      resolve();
-    });
+    webSocket.send(Response.Serialize(response), true);
+    return Promise.resolve();
   }
 }

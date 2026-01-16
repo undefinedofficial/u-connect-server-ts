@@ -10,7 +10,10 @@ import { DataType, Status } from "../enums";
 import { MethodError } from "../errors/MethodError";
 import { Request } from "./Request";
 import { Response } from "./Response";
-import { ServerCallContext, ServerCallContextSource } from "./ServerCallContext";
+import {
+  ServerCallContext,
+  ServerCallContextSource,
+} from "./ServerCallContext";
 
 /**  Method types supported by u-connect. */
 export const enum MethodType {
@@ -33,7 +36,10 @@ export interface IMethod {
   Name: string;
   FullName: string;
   service: Object;
-  Invoke<I>(request: Request<I>, context: ServerCallContextSource): Promise<void>;
+  Invoke<I>(
+    request: Request<I>,
+    context: ServerCallContextSource
+  ): Promise<void>;
 }
 
 /**
@@ -73,7 +79,12 @@ export abstract class Method implements IMethod {
    */
   service: Object;
 
-  constructor(type: MethodType, service: Object, name: string, handler: (...args: any[]) => any) {
+  constructor(
+    type: MethodType,
+    service: Object,
+    name: string,
+    handler: (...args: any[]) => any
+  ) {
     this.Type = type;
     this.ServiceName = service.constructor.name;
     this.Name = name;
@@ -81,9 +92,16 @@ export abstract class Method implements IMethod {
     this.service = service;
   }
 
-  abstract Invoke<I>(request: Request<I>, context: ServerCallContext): Promise<void>;
+  abstract Invoke<I>(
+    request: Request<I>,
+    context: ServerCallContext
+  ): Promise<void>;
 
-  protected HandleError(error: unknown, response: Response<any>, context: ServerCallContext) {
+  protected HandleError(
+    error: unknown,
+    response: Response<any>,
+    context: ServerCallContext
+  ) {
     if (error instanceof MethodError) {
       const { status, message } = error;
       response.error = message;
@@ -110,7 +128,10 @@ export abstract class Method implements IMethod {
 /**
  * A non-generic representation of a remote unary method.
  */
-export class UnaryMethod<I extends Request<any>, O extends Response<any>> extends Method {
+export class UnaryMethod<
+  I extends Request<any>,
+  O extends Response<any>
+> extends Method {
   constructor(service: Object, name: string, handler: (...args: any[]) => any) {
     super(MethodType.Unary, service, name, handler);
   }
@@ -118,7 +139,10 @@ export class UnaryMethod<I extends Request<any>, O extends Response<any>> extend
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+  async Invoke<I, O>(
+    request: Request<I>,
+    context: ServerCallContextSource
+  ): Promise<void> {
     const response: Response<O> = {
       id: request.id,
       method: request.method,
@@ -126,14 +150,18 @@ export class UnaryMethod<I extends Request<any>, O extends Response<any>> extend
     };
     try {
       if (request.type !== DataType.UNARY_CLIENT)
-        throw new MethodError(Status.UNIMPLEMENTED, `Method ${request.method} is a unary`);
+        throw new MethodError(
+          Status.UNIMPLEMENTED,
+          `Method ${request.method} is a unary`
+        );
 
-      response.response = (await this.Handler(request.request, context)) ?? null;
+      response.response =
+        (await this.Handler(request.request, context)) ?? null;
       response.status = context.Status;
     } catch (error) {
       this.HandleError(error, response, context);
     } finally {
-      return context.Send(response);
+      context.Send(response);
     }
   }
 }
@@ -149,7 +177,10 @@ export class ClientStreamingMethod<I, O> extends Method {
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+  async Invoke<I, O>(
+    request: Request<I>,
+    context: ServerCallContextSource
+  ): Promise<void> {
     const response: Response<O> = {
       id: request.id,
       method: request.method,
@@ -168,7 +199,7 @@ export class ClientStreamingMethod<I, O> extends Method {
     } catch (error) {
       this.HandleError(error, response, context);
     } finally {
-      return context.Send(response);
+      context.Send(response);
     }
   }
 }
@@ -184,7 +215,10 @@ export class ServerStreamingMethod<I, O> extends Method {
   /**
    * Invoke handler for the method.
    */
-  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+  async Invoke<I, O>(
+    request: Request<I>,
+    context: ServerCallContextSource
+  ): Promise<void> {
     const response: Response<O> = {
       id: request.id,
       method: request.method,
@@ -203,7 +237,7 @@ export class ServerStreamingMethod<I, O> extends Method {
     } catch (error) {
       this.HandleError(error, response, context);
     } finally {
-      return context.Send(response);
+      context.Send(response);
     }
   }
 }
@@ -221,7 +255,10 @@ export class DuplexStreamingMethod<I, O> extends Method {
    *  @param request - The request object.
    */
 
-  async Invoke<I, O>(request: Request<I>, context: ServerCallContextSource): Promise<void> {
+  async Invoke<I, O>(
+    request: Request<I>,
+    context: ServerCallContextSource
+  ): Promise<void> {
     const response: Response<O> = {
       id: request.id,
       method: request.method,
@@ -241,7 +278,7 @@ export class DuplexStreamingMethod<I, O> extends Method {
     } catch (error) {
       this.HandleError(error, response, context);
     } finally {
-      return context.Send(response);
+      context.Send(response);
     }
   }
 }

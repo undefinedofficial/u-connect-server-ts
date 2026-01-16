@@ -6,7 +6,7 @@
  * Released under the MIT license
  */
 
-﻿/**
+/**
  * A stream of messages to be read.
  * Messages can be awaited await reader.MoveNext(), that returns true
  * if there is a message available and false if there are no more messages
