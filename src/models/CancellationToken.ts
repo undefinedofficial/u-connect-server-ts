@@ -9,19 +9,12 @@
 import { isPromice } from "../utils";
 
 export class CancellationToken {
-  private _isCancellationRequested: boolean = false;
-  private _onCancellationRequestedCallbacks: (() => void | Promise<void>)[] =
+  protected _isCancellationRequested: boolean = false;
+  protected _onCancellationRequestedCallbacks: (() => void | Promise<void>)[] =
     [];
+
   get IsCancellationRequested(): boolean {
     return this._isCancellationRequested;
-  }
-
-  protected async Cancel() {
-    this._isCancellationRequested = true;
-    for (const callback of this._onCancellationRequestedCallbacks) {
-      const result = callback();
-      if (isPromice(result)) await result;
-    }
   }
 
   Register(callback: () => void) {
@@ -30,15 +23,18 @@ export class CancellationToken {
 }
 
 export class CancellationTokenSource extends CancellationToken {
-  constructor(deadline?: number) {
+  constructor() {
     super();
-    if (deadline && deadline > 0) setTimeout(() => this.Cancel(), deadline);
   }
   get Token(): CancellationToken {
     return this;
   }
 
-  Cancel() {
-    return super.Cancel();
+  async Cancel() {
+    this._isCancellationRequested = true;
+    for (const callback of this._onCancellationRequestedCallbacks) {
+      const result = callback();
+      if (isPromice(result)) await result;
+    }
   }
 }

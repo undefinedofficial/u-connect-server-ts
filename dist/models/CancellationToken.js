@@ -26,6 +26,18 @@ class CancellationToken {
     get IsCancellationRequested() {
         return this._isCancellationRequested;
     }
+    Register(callback) {
+        this._onCancellationRequestedCallbacks.push(callback);
+    }
+}
+exports.CancellationToken = CancellationToken;
+class CancellationTokenSource extends CancellationToken {
+    constructor() {
+        super();
+    }
+    get Token() {
+        return this;
+    }
     Cancel() {
         return __awaiter(this, void 0, void 0, function* () {
             this._isCancellationRequested = true;
@@ -35,23 +47,6 @@ class CancellationToken {
                     yield result;
             }
         });
-    }
-    Register(callback) {
-        this._onCancellationRequestedCallbacks.push(callback);
-    }
-}
-exports.CancellationToken = CancellationToken;
-class CancellationTokenSource extends CancellationToken {
-    constructor(deadline) {
-        super();
-        if (deadline && deadline > 0)
-            setTimeout(() => this.Cancel(), deadline);
-    }
-    get Token() {
-        return this;
-    }
-    Cancel() {
-        return super.Cancel();
     }
 }
 exports.CancellationTokenSource = CancellationTokenSource;

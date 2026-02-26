@@ -92,7 +92,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @return {Promise<void>} A promise that resolves when the cancellation is complete.
      */
     Cancel(): Promise<void>;
-    _clientStreamCore?: ClientStreamReader<any>;
+    private _clientStreamCore?;
     /**
      * Receives a request and forwards it to the client stream if it exists.
      * @param {IRequest<T>} request - The request to be received.
@@ -113,14 +113,15 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @returns {IServerStreamWriter<T>} - The newly created server stream writer.
      */
     CreateServerStreamWriter<T>(): IServerStreamWriter<T>;
+    private readonly _htimeout;
     /**
      * CancellationTokenSource for controlling current call cancellation.
      */
-    private _cancellationTokenCore;
+    private readonly _cancellationTokenCore;
     /**
      * The web socket connection.
      */
-    private _webSocketCore;
+    private readonly _webSocketCore;
     /**
      * Kills all active tasks and close the connection.
      *
@@ -138,7 +139,7 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @param {Response<T>} response - The response to be sent.
      * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
      */
-    SendWithMeta<T>(response: Response<T>): Promise<boolean>;
+    SendEnd<T>(response: Response<T>): Promise<boolean>;
     static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void>;
 }
 //# sourceMappingURL=ServerCallContext.d.ts.map

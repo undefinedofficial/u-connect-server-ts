@@ -105,17 +105,14 @@ class ServerCallContextSource extends ServerCallContext {
     constructor(webSocket, request) {
         var _a, _b;
         let deadline;
-        if ((_a = request.meta) === null || _a === void 0 ? void 0 : _a["timeout"]) {
+        if ((_a = request.meta) === null || _a === void 0 ? void 0 : _a["timeout"])
             deadline = parseInt((_b = request.meta) === null || _b === void 0 ? void 0 : _b["timeout"]) || undefined;
-        }
-        const cancellationTokenSource = new CancellationToken_1.CancellationTokenSource(deadline);
+        const cancellationTokenSource = new CancellationToken_1.CancellationTokenSource();
         super(request.id, request.method, cancellationTokenSource, request.meta, deadline);
-        /**
-         * CancellationTokenSource for controlling current call cancellation.
-         */
-        this._cancellationTokenCore = new CancellationToken_1.CancellationTokenSource();
         this._cancellationTokenCore = cancellationTokenSource;
         this._webSocketCore = webSocket;
+        if (deadline && deadline > 0)
+            this._htimeout = setTimeout(() => this.Cancel(), deadline);
     }
     GetUserState() {
         return this._webSocketCore.getUserData();
@@ -139,6 +136,8 @@ class ServerCallContextSource extends ServerCallContext {
             if (this._cancellationTokenCore.IsCancellationRequested)
                 return;
             (_a = this._clientStreamCore) === null || _a === void 0 ? void 0 : _a.Finish();
+            if (this._htimeout)
+                clearTimeout(this._htimeout);
             return this._cancellationTokenCore.Cancel();
         });
     }
@@ -205,10 +204,12 @@ class ServerCallContextSource extends ServerCallContext {
      * @param {Response<T>} response - The response to be sent.
      * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
      */
-    SendWithMeta(response) {
+    SendEnd(response) {
         return __awaiter(this, void 0, void 0, function* () {
             if (this.ResponseMeta)
                 response.meta = this.ResponseMeta;
+            if (this._htimeout)
+                clearTimeout(this._htimeout);
             return this.Send(response);
         });
     }

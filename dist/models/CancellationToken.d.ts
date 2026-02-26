@@ -6,14 +6,13 @@
  * Released under the MIT license
  */
 export declare class CancellationToken {
-    private _isCancellationRequested;
-    private _onCancellationRequestedCallbacks;
+    protected _isCancellationRequested: boolean;
+    protected _onCancellationRequestedCallbacks: (() => void | Promise<void>)[];
     get IsCancellationRequested(): boolean;
-    protected Cancel(): Promise<void>;
     Register(callback: () => void): void;
 }
 export declare class CancellationTokenSource extends CancellationToken {
-    constructor(deadline?: number);
+    constructor();
     get Token(): CancellationToken;
     Cancel(): Promise<void>;
 }

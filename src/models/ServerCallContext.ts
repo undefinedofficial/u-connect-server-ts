@@ -159,10 +159,10 @@ export class ServerCallContextSource extends ServerCallContext {
    */
   constructor(webSocket: IWebSocket, request: Request<any>) {
     let deadline;
-    if (request.meta?.["timeout"]) {
+    if (request.meta?.["timeout"])
       deadline = parseInt(request.meta?.["timeout"]) || undefined;
-    }
-    const cancellationTokenSource = new CancellationTokenSource(deadline);
+
+    const cancellationTokenSource = new CancellationTokenSource();
     super(
       request.id,
       request.method,
@@ -172,6 +172,9 @@ export class ServerCallContextSource extends ServerCallContext {
     );
     this._cancellationTokenCore = cancellationTokenSource;
     this._webSocketCore = webSocket;
+
+    if (deadline && deadline > 0)
+      this._htimeout = setTimeout(() => this.Cancel(), deadline);
   }
 
   public GetUserState<T>(): T {
@@ -196,10 +199,13 @@ export class ServerCallContextSource extends ServerCallContext {
     if (this._cancellationTokenCore.IsCancellationRequested) return;
 
     this._clientStreamCore?.Finish();
+
+    if (this._htimeout) clearTimeout(this._htimeout);
+
     return this._cancellationTokenCore.Cancel();
   }
 
-  _clientStreamCore?: ClientStreamReader<any>;
+  private _clientStreamCore?: ClientStreamReader<any>;
 
   /**
    * Receives a request and forwards it to the client stream if it exists.
@@ -234,16 +240,17 @@ export class ServerCallContextSource extends ServerCallContext {
     return new ServerStreamWriter<T>(this);
   }
 
+  private readonly _htimeout: NodeJS.Timeout;
+
   /**
    * CancellationTokenSource for controlling current call cancellation.
    */
-  private _cancellationTokenCore: CancellationTokenSource =
-    new CancellationTokenSource();
+  private readonly _cancellationTokenCore: CancellationTokenSource;
 
   /**
    * The web socket connection.
    */
-  private _webSocketCore: IWebSocket;
+  private readonly _webSocketCore: IWebSocket;
 
   /**
    * Kills all active tasks and close the connection.
@@ -278,8 +285,9 @@ export class ServerCallContextSource extends ServerCallContext {
    * @param {Response<T>} response - The response to be sent.
    * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
-  async SendWithMeta<T>(response: Response<T>): Promise<boolean> {
+  async SendEnd<T>(response: Response<T>): Promise<boolean> {
     if (this.ResponseMeta) response.meta = this.ResponseMeta;
+    if (this._htimeout) clearTimeout(this._htimeout);
     return this.Send(response);
   }
 

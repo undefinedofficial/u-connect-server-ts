@@ -98,7 +98,7 @@ class UnaryMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                context.SendWithMeta(response);
+                context.SendEnd(response);
             }
         });
     }
@@ -133,7 +133,7 @@ class ClientStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                context.SendWithMeta(response);
+                context.SendEnd(response);
             }
         });
     }
@@ -167,7 +167,7 @@ class ServerStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                context.SendWithMeta(response);
+                context.SendEnd(response);
             }
         });
     }
@@ -203,7 +203,7 @@ class DuplexStreamingMethod extends Method {
                 this.HandleError(error, response, context);
             }
             finally {
-                context.SendWithMeta(response);
+                context.SendEnd(response);
             }
         });
     }
