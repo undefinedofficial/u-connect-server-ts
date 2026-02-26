@@ -1,6 +1,6 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "v2.4.1",
+  "version": "v2.4.2",
   "files": [
     "dist/**"
   ],
@@ -26,7 +26,6 @@
   },
   "dependencies": {
     "@msgpack/msgpack": "^3.1.2",
-    "dotenv": "^16.0.1",
     "uWebSockets.js": "uNetworking/uWebSockets.js#v20.57.0"
   }
 }

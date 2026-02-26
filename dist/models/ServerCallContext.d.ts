@@ -133,6 +133,12 @@ export declare class ServerCallContextSource extends ServerCallContext {
      * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
      */
     Send<T>(response: Response<T>): Promise<boolean>;
+    /**
+     * Sends the response based on the provided input.
+     * @param {Response<T>} response - The response to be sent.
+     * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
+     */
+    SendWithMeta<T>(response: Response<T>): Promise<boolean>;
     static Send<T>(response: Response<T>, webSocket: IWebSocket): Promise<void>;
 }
 //# sourceMappingURL=ServerCallContext.d.ts.map

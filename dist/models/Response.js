@@ -10,9 +10,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.Response = void 0;
 const msgpack_1 = require("@msgpack/msgpack");
 class Response {
-    /**
-     *
-     */
     constructor(id, method, type, response, status, meta, error) {
         this.id = id;
         this.method = method;

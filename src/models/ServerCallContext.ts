@@ -273,6 +273,16 @@ export class ServerCallContextSource extends ServerCallContext {
     return true;
   }
 
+  /**
+   * Sends the response based on the provided input.
+   * @param {Response<T>} response - The response to be sent.
+   * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
+   */
+  async SendWithMeta<T>(response: Response<T>): Promise<boolean> {
+    if (this.ResponseMeta) response.meta = this.ResponseMeta;
+    return this.Send(response);
+  }
+
   public static Send<T>(
     response: Response<T>,
     webSocket: IWebSocket

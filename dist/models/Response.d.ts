@@ -15,9 +15,6 @@ export declare class Response<P> {
     status?: (Status | null) | undefined;
     meta?: (ResponseMetadata | null) | undefined;
     error?: string | null | undefined;
-    /**
-     *
-     */
     constructor(id: string, method: string, type: DataType, response?: (P | null) | undefined, status?: (Status | null) | undefined, meta?: (ResponseMetadata | null) | undefined, error?: string | null | undefined);
     static Serialize<T>({ id, method, type, response, status, meta, error, }: Response<T>): Uint8Array;
 }

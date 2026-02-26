@@ -200,6 +200,18 @@ class ServerCallContextSource extends ServerCallContext {
             return true;
         });
     }
+    /**
+     * Sends the response based on the provided input.
+     * @param {Response<T>} response - The response to be sent.
+     * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
+     */
+    SendWithMeta(response) {
+        return __awaiter(this, void 0, void 0, function* () {
+            if (this.ResponseMeta)
+                response.meta = this.ResponseMeta;
+            return this.Send(response);
+        });
+    }
     static Send(response, webSocket) {
         if (webSocket.getUserData().islive == false)
             return Promise.reject("Connection is not live");
