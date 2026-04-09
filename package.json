@@ -1,14 +1,8 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "v2.4.3",
-  "files": [
-    "dist/**"
-  ],
-  "main": "dist/index.js",
-  "module": "dist/index.js",
-  "types": "dist/index.d.ts",
-  "type": "commonjs",
-  "private": true,
+  "version": "v3.0.0",
+  "description": "High-performance transient RPC server for Chess Engine",
+  "type": "module",
   "license": "MIT",
   "author": "https://github.com/undefinedofficial",
   "repository": {
@@ -16,16 +10,50 @@
     "url": "https://github.com/undefinedofficial/u-connect-server-ts.git"
   },
   "scripts": {
-    "dev": "ts-node-dev --respawn --watch --transpile-only example/app.ts",
-    "build": "tsc"
+    "dev": "tsx watch src/example/app.ts",
+    "build": "pkgroll"
   },
   "devDependencies": {
-    "@types/node": "*",
-    "ts-node-dev": "^2.0.0",
+    "@types/node": "^22.0.0",
+    "@u-connect/client-ts": "https://github.com/undefinedofficial/u-connect-client-ts#v1.3.1",
+    "glob": "^13.0.6",
+    "msgpackr": "^1.10.1",
+    "pkgroll": "^2.27.0",
+    "tsx": "^4.7.1",
+    "typescript": "^5.4.5",
+    "uWebSockets.js": "github:uNetworking/uWebSockets.js#v20.61.0"
+  },
+  "peerDependencies": {
+    "msgpackr": "^1.10.1",
+    "uWebSockets.js": "*",
     "typescript": "^5.4.5"
   },
-  "dependencies": {
-    "@msgpack/msgpack": "^3.1.2",
-    "uWebSockets.js": "uNetworking/uWebSockets.js#v20.57.0"
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "files": [
+    "dist/*",
+    "README.md",
+    "LICENSE"
+  ],
+  "main": "./dist/core/index.cjs",
+  "module": "./dist/core/index.mjs",
+  "types": "./dist/core/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/core/index.d.ts",
+      "import": "./dist/core/index.mjs",
+      "require": "./dist/core/index.cjs"
+    },
+    "./serializer/*": {
+      "types": "./dist/serializer/*.d.ts",
+      "import": "./dist/serializer/*.mjs",
+      "require": "./dist/serializer/*.cjs"
+    },
+    "./transport/*": {
+      "types": "./dist/transport/*.d.ts",
+      "import": "./dist/transport/*.mjs",
+      "require": "./dist/transport/*.cjs"
+    }
   }
 }

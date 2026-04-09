@@ -1,9 +1,10 @@
 {
   "include": ["src/**/*"],
   "compilerOptions": {
-    "target": "ES6",
+    "target": "esnext",
+    "lib": ["es2022", "esnext.decorators", "dom"],
     "experimentalDecorators": true,
-    "emitDecoratorMetadata": true,
+    "emitDecoratorMetadata": false,
     "esModuleInterop": false,
     "forceConsistentCasingInFileNames": true,
     "strict": true,
@@ -11,12 +12,12 @@
     "skipLibCheck": true,
     "outDir": "./dist",
     "rootDir": "./src",
-    "declarationMap": true,
+    "declarationMap": false,
     "declaration": true,
     "checkJs": false,
     "allowJs": true,
     "isolatedModules": true,
-    "module": "NodeNext",
-    "moduleResolution": "NodeNext"
+    "module": "esnext",
+    "moduleResolution": "bundler"
   }
 }
