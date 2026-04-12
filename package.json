@@ -1,6 +1,6 @@
 {
   "name": "@u-connect/server-ts",
-  "version": "v3.0.0",
+  "version": "v3.0.1",
   "description": "High-performance RPC server",
   "type": "module",
   "license": "MIT",

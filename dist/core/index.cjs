@@ -606,8 +606,8 @@ class DuplexStreamingMethod extends Method {
 
 class Processor {
   configureMethods(registry, hubClass, args) {
-    const className = hubClass.name;
     const metadata = hubClass.prototype[RPC_METADATA];
+    const className = metadata.name || hubClass.name;
     if (!metadata) return;
     const classMiddlewares = metadata.middlewares ?? [];
     for (const [methodName, methodMeta] of metadata.methods) {
@@ -615,7 +615,7 @@ class Processor {
       const callName = methodMeta.name;
       if (methodType === void 0 || !callName)
         throw new Error(
-          `Middleware can only be applied to RPC methods. Method '${callName}.${String(
+          `Middleware can only be applied to RPC methods. Method '${className}.${String(
             methodName
           )}' is not registered as an RPC method. Make sure to declare it with a method decorator like @UnaryMethod, @ClientStreamMethod, @ServerStreamMethod or @DuplexStreamMethod.`
         );
@@ -651,34 +651,34 @@ class Processor {
       return dispatch(0);
     };
   }
-  createMethodInstance(type, hubName, methodName, pipeline, transformer) {
+  createMethodInstance(type, serviceName, methodName, pipeline, transformer) {
     switch (type) {
       case MethodType.Unary:
-        return new UnaryMethod$1(hubName, methodName, pipeline, transformer);
+        return new UnaryMethod$1(serviceName, methodName, pipeline, transformer);
       case MethodType.ClientStreaming:
         return new ClientStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
         );
       case MethodType.ServerStreaming:
         return new ServerStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
         );
       case MethodType.DuplexStreaming:
         return new DuplexStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
         );
       default:
         throw new Error(
-          `Unsupported method type: ${type} for ${hubName}.${methodName}`
+          `Unsupported method type: ${type} for ${serviceName}.${methodName}`
         );
     }
   }
@@ -733,7 +733,6 @@ function getOrCreateMetadata(target) {
       value: { methods: /* @__PURE__ */ new Map() },
       writable: false,
       enumerable: false,
-      // Не будет светиться в Object.keys или for..in
       configurable: false
     });
   }
@@ -762,6 +761,12 @@ const DuplexStreamMethod = (name) => createMethodDecorator(
   MethodType.DuplexStreaming,
   name
 );
+function Service(name) {
+  return function(target, propertyKey) {
+    const metadata = getOrCreateMetadata(target);
+    metadata.name = name;
+  };
+}
 function Middleware(mw) {
   return function(target, propertyKey, descriptor) {
     const metadata = getOrCreateMetadata(target);
@@ -813,6 +818,7 @@ exports.ServerCallContext = ServerCallContext;
 exports.ServerCallContextSource = ServerCallContextSource;
 exports.ServerStreamMethod = ServerStreamMethod;
 exports.ServerStreamWriter = ServerStreamWriter;
+exports.Service = Service;
 exports.Status = Status;
 exports.Transformer = Transformer;
 exports.UnaryMethod = UnaryMethod;

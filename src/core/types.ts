@@ -35,6 +35,7 @@ export type MethodMetadata = {
 };
 
 export interface ServiceMetadata {
+  name?: string;
   methods: Map<string | symbol, MethodMetadata>;
   middlewares?: MiddlewareFn[];
 }

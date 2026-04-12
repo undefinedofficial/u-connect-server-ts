@@ -10,13 +10,11 @@ import {
 } from "./types";
 
 export function getOrCreateMetadata(target: any): ServiceMetadata {
-  // Проверяем, есть ли метаданные ИМЕННО у этого класса (а не у базового по цепочке прототипов)
   if (!Object.prototype.hasOwnProperty.call(target, RPC_METADATA)) {
-    // Определяем скрытое неперечисляемое свойство
     Object.defineProperty(target, RPC_METADATA, {
       value: { methods: new Map() } satisfies ServiceMetadata,
       writable: false,
-      enumerable: false, // Не будет светиться в Object.keys или for..in
+      enumerable: false,
       configurable: false,
     });
   }
@@ -65,7 +63,6 @@ export type DuplexStreamHandler<I = any, O = any> = (
   context: ServerCallContext
 ) => Promise<any> | any;
 
-// Экспортируем типизированные декораторы
 export const UnaryMethod = (name?: string) =>
   createMethodDecorator<UnaryHandler<any, any>>(MethodType.Unary, name);
 export const ClientStreamMethod = (name?: string) =>
@@ -84,6 +81,13 @@ export const DuplexStreamMethod = (name?: string) =>
     name
   );
 
+export function Service(name?: string) {
+  return function (target: any, propertyKey?: string | symbol) {
+    const metadata = getOrCreateMetadata(target);
+    metadata.name = name;
+  };
+}
+
 export function Middleware(mw: MiddlewareFn) {
   return function (
     target: any,
@@ -94,7 +98,6 @@ export function Middleware(mw: MiddlewareFn) {
       | TypedPropertyDescriptor<ServerStreamHandler<any, any>>
       | TypedPropertyDescriptor<DuplexStreamHandler<any, any>>
   ) {
-    // Доступ к метаданным
     const metadata = getOrCreateMetadata(target);
 
     if (!propertyKey) {
@@ -114,7 +117,6 @@ export function Middleware(mw: MiddlewareFn) {
   };
 }
 
-// Извлекает тип входных данных из метода.
 export type ExtractMethodInput<T> = T extends (
   i: infer I,
   ...args: any[]

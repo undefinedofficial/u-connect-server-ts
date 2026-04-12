@@ -21,8 +21,8 @@ export class Processor {
     hubClass: TService,
     args: ConstructorParameters<TService>
   ) {
-    const className = hubClass.name;
     const metadata = hubClass.prototype[RPC_METADATA] as ServiceMetadata;
+    const className = metadata.name || hubClass.name;
 
     if (!metadata) return;
 
@@ -34,13 +34,13 @@ export class Processor {
       if (methodType === undefined || !callName)
         throw new Error(
           `Middleware can only be applied to RPC methods. ` +
-            `Method '${callName}.${String(
+            `Method '${className}.${String(
               methodName
             )}' is not registered as an RPC method. ` +
             `Make sure to declare it with a method decorator like @UnaryMethod, @ClientStreamMethod, @ServerStreamMethod or @DuplexStreamMethod.`
         );
 
-      // Определяем, есть ли исходящий поток (3 аргумента)
+      // Определяем, есть ли исходящий поток
       const isStreamingOut =
         methodMeta.type === MethodType.ServerStreaming ||
         methodMeta.type === MethodType.DuplexStreaming;
@@ -105,7 +105,7 @@ export class Processor {
 
   private createMethodInstance(
     type: MethodType,
-    hubName: string,
+    serviceName: string,
     methodName: string,
     pipeline: (...args: any[]) => Promise<any>,
     transformer?: TransformerFn
@@ -113,11 +113,11 @@ export class Processor {
     // Выбираем класс реализации в зависимости от типа метода
     switch (type) {
       case MethodType.Unary:
-        return new UnaryMethod(hubName, methodName, pipeline, transformer);
+        return new UnaryMethod(serviceName, methodName, pipeline, transformer);
 
       case MethodType.ClientStreaming:
         return new ClientStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
@@ -125,7 +125,7 @@ export class Processor {
 
       case MethodType.ServerStreaming:
         return new ServerStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
@@ -133,7 +133,7 @@ export class Processor {
 
       case MethodType.DuplexStreaming:
         return new DuplexStreamingMethod(
-          hubName,
+          serviceName,
           methodName,
           pipeline,
           transformer
@@ -141,7 +141,7 @@ export class Processor {
 
       default:
         throw new Error(
-          `Unsupported method type: ${type} for ${hubName}.${methodName}`
+          `Unsupported method type: ${type} for ${serviceName}.${methodName}`
         );
     }
   }
