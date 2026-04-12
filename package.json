@@ -1,7 +1,7 @@
 {
   "name": "@u-connect/server-ts",
   "version": "v3.0.0",
-  "description": "High-performance transient RPC server for Chess Engine",
+  "description": "High-performance RPC server",
   "type": "module",
   "license": "MIT",
   "author": "https://github.com/undefinedofficial",
