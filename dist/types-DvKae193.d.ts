@@ -24,18 +24,15 @@ declare class ClientStreamReader<T> implements IClientStreamReader<T> {
     private _current;
     private _finished;
     private _nextPromise;
-    private _isWaitingForDrain;
+    private _isSuspended;
     constructor(_context: ServerCallContextSource, _transformer?: TransformerFn | undefined, _bufferLimit?: number);
     get Current(): T;
     private setCurrent;
+    private updateFlowControl;
     MoveNext(): Promise<boolean>;
-    [Symbol.asyncIterator](): AsyncIterator<T>;
-    /**
-     * Прием сообщения от транспортного слоя
-     */
     Receive(message: T): void;
     Finish(): void;
-    private Continue;
+    [Symbol.asyncIterator](): AsyncIterator<T>;
 }
 declare class ServerStreamWriter<T> implements IServerStreamWriter<T> {
     private readonly _context;
@@ -192,8 +189,8 @@ type MethodMetadata = {
 };
 interface ServiceMetadata {
     name?: string;
-    methods: Map<string | symbol, MethodMetadata>;
     middlewares?: MiddlewareFn[];
+    methods: Map<string | symbol, MethodMetadata>;
 }
 /**
  * A writable stream of messages that is used in server-side handlers.
@@ -264,7 +261,15 @@ declare const enum PackageType {
     /**
      * Abort any pending request or stream.
      */
-    ABORT = 5
+    ABORT = 5,
+    /**
+     * Suspends the stream, preventing any further data from being received.
+     */
+    STREAM_SUSPEND = 6,
+    /**
+     * Resumes the stream, allowing data to be received again.
+     */
+    STREAM_RESUME = 7
 }
 type Metadata = Record<string, string>;
 type RequestMetadata = Readonly<Metadata>;

@@ -20,17 +20,18 @@ import {
   MethodError,
   Status,
   Transformer,
+  Service,
+  RPC_METADATA,
 } from "../core";
 
 import { MsgPackSerializer } from "../serializer/MsgPackSerializer";
 import { uWebSocketsTransport } from "../transport/uWebSocketsTransport";
 
-const generate = (max: number, min: number = 0) =>
-  Math.floor(Math.random() * (max - min) + min);
+const generate = (max: number, min: number = 0) => Math.floor(Math.random() * (max - min) + min);
 
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 
-// @Service()
+@Service("Hello")
 @Middleware((ctx, next) => {
   console.log(`Service middleware`, ctx.Method);
   return next();
@@ -50,10 +51,7 @@ class HelloService {
 
     return data + "unary";
   })
-  public async SayHello(
-    name: string,
-    context: ServerCallContext
-  ): Promise<string | void> {
+  public async SayHello(name: string, context: ServerCallContext): Promise<string | void> {
     console.log("Unary method call", name);
     let isAborted = false;
     context.CancellationToken.Register(() => {
@@ -86,10 +84,7 @@ class HelloService {
     throw new MethodError(Status.RESOURCE_EXHAUSTED, "This Error");
     return data + "client";
   })
-  public async SayHelloClientStream(
-    requestStream: IClientStreamReader<string>,
-    context: ServerCallContext
-  ) {
+  public async SayHelloClientStream(requestStream: IClientStreamReader<string>, context: ServerCallContext) {
     let result = "";
     console.log("Client stream method call");
 
@@ -99,10 +94,7 @@ class HelloService {
 
     while (await requestStream.MoveNext()) {
       result += requestStream.Current;
-      console.log(
-        "Client stream method call requestStream.Current",
-        requestStream.Current
-      );
+      console.log("Client stream method call requestStream.Current", requestStream.Current);
     }
 
     context.ResponseMeta = context.RequestMeta;
@@ -123,7 +115,7 @@ class HelloService {
   public async SayHelloServerStream(
     request: string,
     responseStream: IServerStreamWriter<string>,
-    context: ServerCallContext
+    context: ServerCallContext,
   ) {
     console.log("Server stream method call request", request);
 
@@ -132,11 +124,14 @@ class HelloService {
       console.log("Server stream method call aborted", request);
     });
 
-    for (let I = 0; I < 500000; I++) {
+    for (let I = 0; I < 50; I++) {
       await responseStream.Write(request + " " + I);
-      await new Promise((resolve) => setTimeout(resolve, 10));
+      // await new Promise((resolve) => setTimeout(resolve, 10));
       if (context.CancellationToken.IsCancellationRequested) return;
     }
+
+    // throw new MethodError(Status.RESOURCE_EXHAUSTED, "This Error");
+
     console.log("end Server stream method call");
   }
 
@@ -153,7 +148,7 @@ class HelloService {
   public async SayHelloDuplexStream(
     requestStream: IClientStreamReader<string>,
     responseStream: IServerStreamWriter<string>,
-    context: ServerCallContext
+    context: ServerCallContext,
   ) {
     console.log("Duplex method call");
     context.ResponseMeta = context.RequestMeta;

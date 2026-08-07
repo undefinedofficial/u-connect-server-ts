@@ -19,7 +19,7 @@ export class Processor {
   public configureMethods<TService extends new (...args: any[]) => any>(
     registry: MethodRegistry,
     hubClass: TService,
-    args: ConstructorParameters<TService>
+    args: ConstructorParameters<TService>,
   ) {
     const metadata = hubClass.prototype[RPC_METADATA] as ServiceMetadata;
     const className = metadata.name || hubClass.name;
@@ -35,9 +35,9 @@ export class Processor {
         throw new Error(
           `Middleware can only be applied to RPC methods. ` +
             `Method '${className}.${String(
-              methodName
+              methodName,
             )}' is not registered as an RPC method. ` +
-            `Make sure to declare it with a method decorator like @UnaryMethod, @ClientStreamMethod, @ServerStreamMethod or @DuplexStreamMethod.`
+            `Make sure to declare it with a method decorator like @UnaryMethod, @ClientStreamMethod, @ServerStreamMethod or @DuplexStreamMethod.`,
         );
 
       // Определяем, есть ли исходящий поток
@@ -54,7 +54,7 @@ export class Processor {
       const finalHandler = async (
         req: unknown,
         resOrCtx: unknown | ServerCallContext,
-        ctx?: ServerCallContext
+        ctx?: ServerCallContext,
       ) => {
         const instance = Reflect.construct(hubClass, args);
         return pipeline(instance, req, resOrCtx, ctx);
@@ -64,7 +64,7 @@ export class Processor {
         className,
         callName,
         finalHandler,
-        methodMeta.transformer
+        methodMeta.transformer,
       );
       registry.add(methodInstance);
     }
@@ -73,12 +73,12 @@ export class Processor {
   private wrapHandler<T extends Record<string | symbol, Function>>(
     methodName: string | symbol,
     middlewares: MiddlewareFn[],
-    isStreamingOut = false
+    isStreamingOut = false,
   ): (
     instance: T,
     req: unknown,
     resOrCtx: unknown,
-    ctx?: ServerCallContext
+    ctx?: ServerCallContext,
   ) => Promise<any> {
     const mwCount = middlewares.length;
     if (mwCount === 0)
@@ -108,7 +108,7 @@ export class Processor {
     serviceName: string,
     methodName: string,
     pipeline: (...args: any[]) => Promise<any>,
-    transformer?: TransformerFn
+    transformer?: TransformerFn,
   ): Method {
     // Выбираем класс реализации в зависимости от типа метода
     switch (type) {
@@ -120,7 +120,7 @@ export class Processor {
           serviceName,
           methodName,
           pipeline,
-          transformer
+          transformer,
         );
 
       case MethodType.ServerStreaming:
@@ -128,7 +128,7 @@ export class Processor {
           serviceName,
           methodName,
           pipeline,
-          transformer
+          transformer,
         );
 
       case MethodType.DuplexStreaming:
@@ -136,12 +136,12 @@ export class Processor {
           serviceName,
           methodName,
           pipeline,
-          transformer
+          transformer,
         );
 
       default:
         throw new Error(
-          `Unsupported method type: ${type} for ${serviceName}.${methodName}`
+          `Unsupported method type: ${type} for ${serviceName}.${methodName}`,
         );
     }
   }

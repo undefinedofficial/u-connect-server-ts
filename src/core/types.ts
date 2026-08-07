@@ -20,11 +20,11 @@ export const enum MethodType {
 
 export type MiddlewareFn = (
   ctx: ServerCallContext,
-  next: () => Promise<void>
+  next: () => Promise<void>,
 ) => Promise<any> | any;
 
 export type TransformerFn<TInput = unknown, TOutput = any> = (
-  data: TInput
+  data: TInput,
 ) => Promise<TOutput> | TOutput;
 
 export type MethodMetadata = {
@@ -36,8 +36,8 @@ export type MethodMetadata = {
 
 export interface ServiceMetadata {
   name?: string;
-  methods: Map<string | symbol, MethodMetadata>;
   middlewares?: MiddlewareFn[];
+  methods: Map<string | symbol, MethodMetadata>;
 }
 
 /**
@@ -120,6 +120,15 @@ export const enum PackageType {
    * Abort any pending request or stream.
    */
   ABORT,
+
+  /**
+   * Suspends the stream, preventing any further data from being received.
+   */
+  STREAM_SUSPEND,
+  /**
+   * Resumes the stream, allowing data to be received again.
+   */
+  STREAM_RESUME,
 }
 
 type Metadata = Record<string, string>;
@@ -276,11 +285,11 @@ export interface ISerializer<IS_BINARY extends boolean = true> {
       payload: T,
       status?: Status,
       meta?: RequestMetadata | null,
-      error?: string
-    ]
+      error?: string,
+    ],
   ): IS_BINARY extends true ? ArrayBuffer | Uint8Array : string;
   deserialize<T>(
-    data: IS_BINARY extends true ? Uint8Array : string
+    data: IS_BINARY extends true ? Uint8Array : string,
   ): [PackageID, string, PackageType, T, RequestMetadata];
 }
 
@@ -295,7 +304,7 @@ export interface IConnection<T = any> {
   send(
     data: string | ArrayBuffer | Uint8Array,
     binary: boolean,
-    compress?: boolean
+    compress?: boolean,
   ): Promise<boolean>;
   close(code?: number, message?: string): void;
 }

@@ -13,6 +13,8 @@ var PackageType = /* @__PURE__ */ ((PackageType2) => {
   PackageType2[PackageType2["STREAM_DUPLEX"] = 3 /* DuplexStreaming */] = "STREAM_DUPLEX";
   PackageType2[PackageType2["STREAM_END"] = 4] = "STREAM_END";
   PackageType2[PackageType2["ABORT"] = 5] = "ABORT";
+  PackageType2[PackageType2["STREAM_SUSPEND"] = 6] = "STREAM_SUSPEND";
+  PackageType2[PackageType2["STREAM_RESUME"] = 7] = "STREAM_RESUME";
   return PackageType2;
 })(PackageType || {});
 var Status = /* @__PURE__ */ ((Status2) => {
@@ -147,8 +149,7 @@ class ServerCallContextSource extends ServerCallContext {
     this._connectionCore = connection;
     this._serializerCore = serializer;
     this._cancellationTokenCore = new CancellationTokenSource();
-    if (deadline && deadline > 0)
-      this._htimeout = setTimeout(() => this.Cancel(), deadline);
+    if (deadline && deadline > 0) this._htimeout = setTimeout(() => this.Cancel(), deadline);
   }
   GetUserState() {
     return this._connectionCore.getData();
@@ -218,9 +219,8 @@ class ServerCallContextSource extends ServerCallContext {
    * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
   async Send(type, payload) {
-    if (this._cancellationTokenCore.IsCancellationRequested)
-      return Promise.resolve(false);
-    return this.RawSend([this.Id, this.Method, type, payload]);
+    if (this._cancellationTokenCore.IsCancellationRequested) return Promise.resolve(false);
+    return this.RawSend([this.Id, this.Method, type, payload ?? null]);
   }
   /**
    * Sends the response based on the provided input.
@@ -228,37 +228,18 @@ class ServerCallContextSource extends ServerCallContext {
    * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
   async SendEnd(type, payload) {
-    if (this._cancellationTokenCore.IsCancellationRequested)
-      return Promise.resolve(false);
+    if (this._cancellationTokenCore.IsCancellationRequested) return Promise.resolve(false);
     if (this._htimeout) {
       clearTimeout(this._htimeout);
       this._htimeout = void 0;
     }
-    return this.RawSend([
-      this.Id,
-      this.Method,
-      type,
-      payload,
-      this.Status,
-      this.ResponseMeta ?? null
-    ]);
+    return this.RawSend([this.Id, this.Method, type, payload ?? null, this.Status, this.ResponseMeta ?? null]);
   }
   async SendError(type, error) {
-    return this.RawSend([
-      this.Id,
-      this.Method,
-      type,
-      null,
-      this.Status,
-      this.ResponseMeta ?? null,
-      error
-    ]);
+    return this.RawSend([this.Id, this.Method, type, null, this.Status, this.ResponseMeta ?? null, error]);
   }
   RawSend(data) {
-    return this._connectionCore.send(
-      this._serializerCore.serialize(data),
-      this._serializerCore.binary
-    );
+    return this._connectionCore.send(this._serializerCore.serialize(data), this._serializerCore.binary);
   }
 }
 
@@ -375,8 +356,7 @@ class ClientStreamReader {
   _current;
   _finished = false;
   _nextPromise = null;
-  // Флаг паузы: мы отправили лимит и ждем, пока MoveNext освободит место
-  _isWaitingForDrain = false;
+  _isSuspended = false;
   get Current() {
     return this._current;
   }
@@ -387,54 +367,41 @@ class ClientStreamReader {
     }
     this._current = data;
   }
+  updateFlowControl() {
+    const isFull = this._buffer.length >= this._bufferLimit;
+    if (isFull && !this._isSuspended) {
+      this._isSuspended = true;
+      this._context.Send(PackageType.STREAM_SUSPEND);
+    } else if (!isFull && this._isSuspended) {
+      this._isSuspended = false;
+      this._context.Send(PackageType.STREAM_RESUME);
+    }
+  }
   async MoveNext() {
     if (this._buffer.length > 0) {
-      this.setCurrent(this._buffer.shift());
-      if (this._isWaitingForDrain && this._buffer.length < this._bufferLimit) {
-        this._isWaitingForDrain = false;
-        this.Continue();
-      }
+      await this.setCurrent(this._buffer.shift());
+      this.updateFlowControl();
       return true;
     }
     if (this._finished) return false;
     const arrived = await new Promise((resolve) => {
       this._nextPromise = { resolve };
-      if (!this._isWaitingForDrain) {
-        this.Continue();
-      }
     });
     if (arrived && this._buffer.length > 0) {
-      this.setCurrent(this._buffer.shift());
+      await this.setCurrent(this._buffer.shift());
+      this.updateFlowControl();
       return true;
     }
     return false;
   }
-  [Symbol.asyncIterator]() {
-    return {
-      next: async () => {
-        if (await this.MoveNext()) return { done: false, value: this.Current };
-        return {
-          done: true,
-          value: void 0
-        };
-      }
-    };
-  }
-  /**
-   * Прием сообщения от транспортного слоя
-   */
   Receive(message) {
     if (this._finished) return;
     if (this._buffer.length >= this._bufferLimit) {
-      this._isWaitingForDrain = true;
+      if (!this._isSuspended) this.updateFlowControl();
       return;
     }
     this._buffer.push(message);
-    if (this._buffer.length < this._bufferLimit) {
-      this.Continue();
-    } else {
-      this._isWaitingForDrain = true;
-    }
+    this.updateFlowControl();
     if (this._nextPromise) {
       const res = this._nextPromise.resolve;
       this._nextPromise = null;
@@ -449,8 +416,10 @@ class ClientStreamReader {
       res(false);
     }
   }
-  Continue() {
-    return this._context.Send(PackageType.STREAM_CLIENT);
+  [Symbol.asyncIterator]() {
+    return {
+      next: async () => await this.MoveNext() ? { done: false, value: this.Current } : { done: true, value: void 0 }
+    };
   }
 }
 class ServerStreamWriter {
@@ -726,15 +695,16 @@ class Builder {
 }
 
 function getOrCreateMetadata(target) {
-  if (!Object.prototype.hasOwnProperty.call(target, RPC_METADATA)) {
-    Object.defineProperty(target, RPC_METADATA, {
+  const prototype = typeof target === "function" ? target.prototype : target;
+  if (!Object.prototype.hasOwnProperty.call(prototype, RPC_METADATA)) {
+    Object.defineProperty(prototype, RPC_METADATA, {
       value: { methods: /* @__PURE__ */ new Map() },
       writable: false,
       enumerable: false,
       configurable: false
     });
   }
-  return target[RPC_METADATA];
+  return prototype[RPC_METADATA];
 }
 function createMethodDecorator(type, customName) {
   return function(target, propertyKey, descriptor) {
@@ -747,20 +717,11 @@ function createMethodDecorator(type, customName) {
   };
 }
 const UnaryMethod = (name) => createMethodDecorator(MethodType.Unary, name);
-const ClientStreamMethod = (name) => createMethodDecorator(
-  MethodType.ClientStreaming,
-  name
-);
-const ServerStreamMethod = (name) => createMethodDecorator(
-  MethodType.ServerStreaming,
-  name
-);
-const DuplexStreamMethod = (name) => createMethodDecorator(
-  MethodType.DuplexStreaming,
-  name
-);
+const ClientStreamMethod = (name) => createMethodDecorator(MethodType.ClientStreaming, name);
+const ServerStreamMethod = (name) => createMethodDecorator(MethodType.ServerStreaming, name);
+const DuplexStreamMethod = (name) => createMethodDecorator(MethodType.DuplexStreaming, name);
 function Service(name) {
-  return function(target, propertyKey) {
+  return function(target) {
     const metadata = getOrCreateMetadata(target);
     metadata.name = name;
   };
@@ -789,11 +750,7 @@ function Transformer(fn) {
       middlewares: []
     };
     if (methodMeta.transformer) {
-      throw new Error(
-        `Method ${String(
-          propertyKey
-        )} already has a transformer. Only one is allowed.`
-      );
+      throw new Error(`Method ${String(propertyKey)} already has a transformer. Only one is allowed.`);
     }
     methodMeta.transformer = fn;
     metadata.methods.set(propertyKey, methodMeta);

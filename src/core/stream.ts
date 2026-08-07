@@ -11,9 +11,7 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
   private _current: T | undefined;
   private _finished: boolean = false;
   private _nextPromise: { resolve: (v: boolean) => void } | null = null;
-
-  // Флаг паузы: мы отправили лимит и ждем, пока MoveNext освободит место
-  private _isWaitingForDrain: boolean = false;
+  private _isSuspended: boolean = false;
 
   constructor(
     private readonly _context: ServerCallContextSource,
@@ -33,16 +31,22 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
     this._current = data as T;
   }
 
+  private updateFlowControl() {
+    const isFull = this._buffer.length >= this._bufferLimit;
+
+    if (isFull && !this._isSuspended) {
+      this._isSuspended = true;
+      this._context.Send(PackageType.STREAM_SUSPEND);
+    } else if (!isFull && this._isSuspended) {
+      this._isSuspended = false;
+      this._context.Send(PackageType.STREAM_RESUME);
+    }
+  }
+
   async MoveNext(): Promise<boolean> {
     if (this._buffer.length > 0) {
-      this.setCurrent(this._buffer.shift());
-
-      // Если мы отбрасывали данные (пауза) и теперь появилось место —
-      // возобновляем поток, отправив Continue.
-      if (this._isWaitingForDrain && this._buffer.length < this._bufferLimit) {
-        this._isWaitingForDrain = false;
-        this.Continue();
-      }
+      await this.setCurrent(this._buffer.shift());
+      this.updateFlowControl();
       return true;
     }
 
@@ -50,56 +54,28 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
 
     const arrived = await new Promise<boolean>((resolve) => {
       this._nextPromise = { resolve };
-      // Если мы не на паузе, запрашиваем данные у клиента
-      if (!this._isWaitingForDrain) {
-        this.Continue();
-      }
     });
 
     if (arrived && this._buffer.length > 0) {
-      this.setCurrent(this._buffer.shift());
+      await this.setCurrent(this._buffer.shift());
+      this.updateFlowControl();
       return true;
     }
 
     return false;
   }
-  public [Symbol.asyncIterator](): AsyncIterator<T> {
-    return {
-      next: async (): Promise<IteratorResult<T>> => {
-        if (await this.MoveNext()) return { done: false, value: this.Current };
 
-        return {
-          done: true,
-          value: undefined,
-        };
-      },
-    };
-  }
-
-  /**
-   * Прием сообщения от транспортного слоя
-   */
   Receive(message: T): void {
     if (this._finished) return;
 
-    // СТРОГАЯ ЗАЩИТА: Если лимит превышен, мы просто выбрасываем данные.
-    // Это защищает Node.js от Heap Overflow при атаке или баге клиента.
     if (this._buffer.length >= this._bufferLimit) {
-      this._isWaitingForDrain = true;
-      // В логах Highload систем здесь обычно ставят метрику "dropped_messages_count"
+      if (!this._isSuspended) this.updateFlowControl();
       return;
     }
 
     this._buffer.push(message);
+    this.updateFlowControl();
 
-    // Если место еще есть — подтверждаем получение и разрешаем следующее.
-    if (this._buffer.length < this._bufferLimit) {
-      this.Continue();
-    } else {
-      this._isWaitingForDrain = true;
-    }
-
-    // Пробуждаем MoveNext, если он ждал данных
     if (this._nextPromise) {
       const res = this._nextPromise.resolve;
       this._nextPromise = null;
@@ -116,8 +92,13 @@ export class ClientStreamReader<T> implements IClientStreamReader<T> {
     }
   }
 
-  private Continue() {
-    return this._context.Send(PackageType.STREAM_CLIENT);
+  public [Symbol.asyncIterator](): AsyncIterator<T> {
+    return {
+      next: async () =>
+        (await this.MoveNext())
+          ? { done: false, value: this.Current }
+          : { done: true, value: undefined },
+    };
   }
 }
 

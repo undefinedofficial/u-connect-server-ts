@@ -1,7 +1,4 @@
-import {
-  CancellationTokenSource,
-  type CancellationToken,
-} from "./CancellationToken";
+import { CancellationTokenSource, type CancellationToken } from "./CancellationToken";
 import type { ClientStreamReader } from "./stream";
 import {
   type PackageID,
@@ -14,12 +11,7 @@ import {
 } from "./types";
 
 export abstract class ServerCallContext {
-  constructor(
-    id: PackageID,
-    method: string,
-    requestMeta?: RequestMetadata | null,
-    deadline?: number
-  ) {
+  constructor(id: PackageID, method: string, requestMeta?: RequestMetadata | null, deadline?: number) {
     this.Id = id;
     this.Method = method;
     this.Deadline = deadline;
@@ -82,13 +74,7 @@ export class ServerCallContextSource extends ServerCallContext {
    * @param {IRequest<any>} request - The request object.
    * @param {number} [deadline] - The deadline for the operation (optional).
    */
-  constructor(
-    connection: IConnection,
-    serializer: ISerializer,
-    id: PackageID,
-    method: string,
-    meta: RequestMetadata
-  ) {
+  constructor(connection: IConnection, serializer: ISerializer, id: PackageID, method: string, meta: RequestMetadata) {
     let deadline;
     if (meta?.["timeout"]) deadline = parseInt(meta?.["timeout"]) || undefined;
 
@@ -98,8 +84,7 @@ export class ServerCallContextSource extends ServerCallContext {
     this._serializerCore = serializer;
     this._cancellationTokenCore = new CancellationTokenSource();
 
-    if (deadline && deadline > 0)
-      this._htimeout = setTimeout(() => this.Cancel(), deadline);
+    if (deadline && deadline > 0) this._htimeout = setTimeout(() => this.Cancel(), deadline);
   }
 
   public GetUserState<T>(): T {
@@ -151,7 +136,7 @@ export class ServerCallContextSource extends ServerCallContext {
     this._clientStreamCore = stream;
   }
 
-  private _htimeout?: NodeJS.Timeout;
+  private _htimeout?: number;
 
   /**
    * CancellationTokenSource for controlling current call cancellation.
@@ -184,10 +169,9 @@ export class ServerCallContextSource extends ServerCallContext {
    * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
   async Send<T>(type: PackageType, payload?: T): Promise<boolean> {
-    if (this._cancellationTokenCore.IsCancellationRequested)
-      return Promise.resolve(false);
+    if (this._cancellationTokenCore.IsCancellationRequested) return Promise.resolve(false);
 
-    return this.RawSend([this.Id, this.Method, type, payload]);
+    return this.RawSend([this.Id, this.Method, type, payload ?? null]);
   }
 
   /**
@@ -196,39 +180,20 @@ export class ServerCallContextSource extends ServerCallContext {
    * @return {Promise<boolean>} A promise that resolves to true if the response was sent successfully, or false if the operation was cancelled.
    */
   async SendEnd<T>(type: PackageType, payload?: T): Promise<boolean> {
-    if (this._cancellationTokenCore.IsCancellationRequested)
-      return Promise.resolve(false);
+    if (this._cancellationTokenCore.IsCancellationRequested) return Promise.resolve(false);
 
     if (this._htimeout) {
       clearTimeout(this._htimeout);
       this._htimeout = undefined;
     }
-    return this.RawSend([
-      this.Id,
-      this.Method,
-      type,
-      payload,
-      this.Status,
-      this.ResponseMeta ?? null,
-    ]);
+    return this.RawSend([this.Id, this.Method, type, payload ?? null, this.Status, this.ResponseMeta ?? null]);
   }
 
   async SendError(type: PackageType, error: string) {
-    return this.RawSend([
-      this.Id,
-      this.Method,
-      type,
-      null,
-      this.Status,
-      this.ResponseMeta ?? null,
-      error,
-    ]);
+    return this.RawSend([this.Id, this.Method, type, null, this.Status, this.ResponseMeta ?? null, error]);
   }
 
   private RawSend(data: Parameters<ISerializer["serialize"]>[0]) {
-    return this._connectionCore.send(
-      this._serializerCore.serialize(data),
-      this._serializerCore.binary
-    );
+    return this._connectionCore.send(this._serializerCore.serialize(data), this._serializerCore.binary);
   }
 }

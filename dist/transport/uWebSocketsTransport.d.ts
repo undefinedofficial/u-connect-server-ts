@@ -1,5 +1,5 @@
 import { WebSocketBehavior, HttpResponse, HttpRequest, TemplatedApp } from 'uWebSockets.js';
-import { I as ITransport, D as Dispatcher } from '../types-D7VpCQBC.js';
+import { I as ITransport, D as Dispatcher } from '../types-DvKae193.js';
 
 interface uWebSocketsTransportOptions<T extends Record<string, any>> extends Omit<WebSocketBehavior<T>, "upgrade" | "message"> {
     upgrade?: (res: HttpResponse, req: HttpRequest) => T | false | Promise<T | false>;
